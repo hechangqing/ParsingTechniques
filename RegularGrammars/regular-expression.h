@@ -31,6 +31,11 @@ public:
   int convert_regular_grammar_to_NFA(const Grammar &regular_grammar, Graph *nfa);
   int eps_closure(const Graph& graph, int state, std::vector<int> *all_states);
   int convert_NFA_to_DFA(const Graph& nfa, Graph *dfa);
+  bool is_standard_form(const Rule &rule) const;
+  int recognise_rule_pattern(const Rule &rule, int *end_idx,
+                             std::vector<int> *or_indices);
+  int convert_regular_expression_to_regular_grammar(const std::string &regular_expression,
+                                                    Grammar *regular_grammar);
 private:
 };
 

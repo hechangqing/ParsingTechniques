@@ -60,6 +60,18 @@ int unit_test() {
     std::cout << dfa.to_string() << std::endl;
     std::cout << "-----------------" << std::endl;
   }
+
+  {
+    RegularExpression regular_expression;
+    Grammar regular_grammar;
+    std::string re_str = "(ab)*(p|q)+";
+    regular_expression.convert_regular_expression_to_regular_grammar(re_str, &regular_grammar);
+    std::cout << "regular_expression " << re_str << "\n";
+    std::cout << "regular_grammar " << "\n";
+    std::cout << "-----------------" << std::endl;
+    std::cout << regular_grammar.to_string() << std::endl;
+    std::cout << "-----------------" << std::endl;
+  }
   return 0;
 }
 
