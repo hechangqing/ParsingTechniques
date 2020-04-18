@@ -42,6 +42,9 @@ private:
 
 class Graph {
 public:
+  int num_states() const {
+    return states_.size();
+  }
   int add_state();
   int set_start(int state) {
     start_state_ = state;

@@ -8,6 +8,26 @@
 #include <sstream>
 #include <stack>
 
+int TransitionTable::init(const Graph& dfa) {
+  start_state_ = dfa.get_start();
+  states_.resize(dfa.num_states());
+  for (int i = 0; i < dfa.num_states(); i++) {
+    if (dfa.is_final(i)) {
+      is_final_[i] = 1;
+    }
+    std::map<int, int>& trans_state = states_[i];
+    const State& cur_state = dfa.get_state(i);
+    for (int a = 0; a < cur_state.num_arcs(); a++) {
+      const Arc& this_arc = cur_state.get_arc(a);
+      int ilabel = this_arc.get_ilabel();
+      int next_state = this_arc.get_next_state();
+      assert(trans_state.find(ilabel) == trans_state.end());
+      trans_state[ilabel] = next_state;
+    }
+  }
+  return 0;
+}
+
 CompoundState::CompoundState(const std::vector<int> &states) {
   states_ = states;
   for (int i = 0; i < states_.size(); i++) {
@@ -76,13 +96,17 @@ int RegularExpression::convert_regular_grammar_to_NFA(const Grammar &regular_gra
   return 0;
 }
 
-int RegularExpression::eps_closure(const Graph& graph, int state, std::vector<int> *all_states) {
+int RegularExpression::eps_closure(const Graph& graph, 
+                                   int state,
+                                   std::vector<int> *all_states) {
+  assert(all_states != NULL);
   all_states->clear();
   std::queue<int> que;
   std::set<int> visited;
   que.push(state);
   all_states->push_back(state);
   visited.insert(state);
+
   while (!que.empty()) {
     int this_state_id = que.front();
     que.pop();
@@ -99,6 +123,15 @@ int RegularExpression::eps_closure(const Graph& graph, int state, std::vector<in
   }
 }
 
+bool RegularExpression::states_contains_final(const Graph& graph, const std::vector<int>& states) {
+  for (int i = 0; i < states.size(); i++) {
+    if (graph.is_final(states[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int RegularExpression::convert_NFA_to_DFA(const Graph& nfa, Graph *dfa) {
   int start_state = nfa.get_start();
   std::vector<int> start_state_eps_closure;
@@ -106,6 +139,9 @@ int RegularExpression::convert_NFA_to_DFA(const Graph& nfa, Graph *dfa) {
 
   int dfa_start_state = dfa->add_state();
   dfa->set_start(dfa_start_state);
+  if (states_contains_final(nfa, start_state_eps_closure)) {
+    dfa->set_final(dfa_start_state);
+  }
 
   std::map<std::string, int> new_state_string_to_new_state_id;
   CompoundState start_compound_state(start_state_eps_closure);
@@ -125,7 +161,7 @@ int RegularExpression::convert_NFA_to_DFA(const Graph& nfa, Graph *dfa) {
       for (int j = 0; j < this_old_state.num_arcs(); j++) {
         const Arc &this_arc = this_old_state.get_arc(j);
         int this_ilabel = this_arc.get_ilabel();
-          if (this_ilabel != EPSILON) {
+        if (this_ilabel != EPSILON) {
           int this_next_state = this_arc.get_next_state();
           std::vector<int> next_state_eps_closure;
           eps_closure(nfa, this_next_state, &next_state_eps_closure);
@@ -147,6 +183,9 @@ int RegularExpression::convert_NFA_to_DFA(const Graph& nfa, Graph *dfa) {
       } else {
         int new_next_state = dfa->add_state();
         dfa->add_arc(this_new_state_id, Arc(ilabel, new_next_state));
+        if (states_contains_final(nfa, states)) {
+          dfa->set_final(new_next_state);
+        }
         new_state_string_to_new_state_id[this_compound_state_str] = new_next_state;
         que.push(this_compound_state);
       }
@@ -481,4 +520,51 @@ int RegularExpression::convert_regular_expression_to_regular_grammar(
     }
   }
   return 0;
+}
+
+int RegularExpression::run_text_on_transition_table(const std::string& text, const TransitionTable& transition_table) {
+  int cur_state = transition_table.get_start();
+  for (int i = 0; i < text.size(); i++) {
+    char c = text[i];
+    int next_state = transition_table.get_next_state(cur_state, c);
+    if (next_state == -1) { // no transition on c
+      return -1; // no match
+    } else if (transition_table.is_final(next_state)) {
+      return i;
+    } else {
+      cur_state = next_state;
+    }
+  }
+  return -1; // no match
+}
+
+int FastTextSearch::compile(const std::string& regular_expression) {
+  regex_str_ = regular_expression;
+  Grammar regular_grammar;
+  regex_.convert_regular_expression_to_regular_grammar(regular_expression, &regular_grammar);
+
+  Graph nfa;
+  regex_.convert_regular_grammar_to_NFA(regular_grammar, &nfa);
+
+  // add self loop in start state to skip chars
+  int start_state = nfa.get_start();
+  for (int c = 0; c <= 127; c++) {
+    nfa.add_arc(start_state, Arc(c, start_state));
+  }
+
+  Graph dfa;
+  regex_.convert_NFA_to_DFA(nfa, &dfa);
+
+  transition_table_.init(dfa);
+
+  return 0;
+}
+
+int FastTextSearch::search(const std::string& text) {
+  int ret = regex_.run_text_on_transition_table(text, transition_table_);
+  if (ret == -1) {
+    return -1; // no match
+  } else {
+    return ret;
+  }
 }

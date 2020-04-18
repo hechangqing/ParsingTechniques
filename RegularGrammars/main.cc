@@ -72,10 +72,30 @@ int unit_test() {
     std::cout << regular_grammar.to_string() << std::endl;
     std::cout << "-----------------" << std::endl;
   }
+
+  {
+    FastTextSearch ts;
+    ts.compile("ababc");
+    int i = ts.search("aabababca");
+    std::cout << i << std::endl;
+  }
   return 0;
 }
 
+int grep(const std::string& regular_expression, const std::string& text) {
+  FastTextSearch ts;
+  ts.compile(regular_expression);
+  int i = ts.search(text);
+  return i;
+}
+
 int main(int argc, char **argv) {
-  unit_test();
+  //unit_test();
+  if (argc == 3) {
+    std::string regex_str = argv[1];
+    std::string text = argv[2];
+    int ix = grep(regex_str, text);
+    std::cout << ix << std::endl;
+  }
   return 0;
 }
