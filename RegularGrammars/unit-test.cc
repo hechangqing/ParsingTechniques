@@ -203,6 +203,8 @@ void unit_test_regular_expression_match() {
 }
 
 int main() {
+  std::cout << "test..." << std::endl;
   unit_test_regular_expression_match();
+  std::cout << "all test passed" << std::endl;
   return 0;
 }
