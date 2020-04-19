@@ -568,3 +568,30 @@ int FastTextSearch::search(const std::string& text) {
     return ret;
   }
 }
+
+int TextMatch::compile(const std::string& regular_expression) {
+  Grammar regular_grammar;
+  regex_.convert_regular_expression_to_regular_grammar(regular_expression, &regular_grammar);
+  Graph nfa;
+  regex_.convert_regular_grammar_to_NFA(regular_grammar, &nfa);
+  Graph dfa;
+  regex_.convert_NFA_to_DFA(nfa, &dfa);
+  transition_table_.init(dfa);
+  return 0;
+}
+
+bool TextMatch::match(const std::string& str) {
+  int cur_state = transition_table_.get_start();
+  for (int i = 0; i < str.size(); i++) {
+    char c = str[i];
+    cur_state = transition_table_.get_next_state(cur_state, c);
+    if (cur_state == -1) { // no transition on c
+      return false; // no match
+    }
+  }
+  if (transition_table_.is_final(cur_state)) {
+    return true;
+  } else {
+    return false; // no match
+  }
+}

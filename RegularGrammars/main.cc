@@ -79,6 +79,22 @@ int unit_test() {
     int i = ts.search("aabababca");
     std::cout << i << std::endl;
   }
+
+  {
+    RegularExpression regular_expression;
+    Grammar regular_grammar;
+    //std::string re_str = "[0123456789][0123456789]*";
+    //std::string re_str = "[01]";
+    //std::string re_str = "[01]*";
+    std::string re_str = "[01][01]*";
+    regular_expression.convert_regular_expression_to_regular_grammar(re_str, &regular_grammar);
+    std::cout << "regular_expression " << re_str << "\n";
+    std::cout << "regular_grammar " << "\n";
+    std::cout << "-----------------" << std::endl;
+    std::cout << regular_grammar.to_string() << std::endl;
+    std::cout << "-----------------" << std::endl;
+  }
+
   return 0;
 }
 
@@ -90,12 +106,12 @@ int grep(const std::string& regular_expression, const std::string& text) {
 }
 
 int main(int argc, char **argv) {
-  //unit_test();
-  if (argc == 3) {
-    std::string regex_str = argv[1];
-    std::string text = argv[2];
-    int ix = grep(regex_str, text);
-    std::cout << ix << std::endl;
-  }
+  unit_test();
+  //if (argc == 3) {
+  //  std::string regex_str = argv[1];
+  //  std::string text = argv[2];
+  //  int ix = grep(regex_str, text);
+  //  std::cout << ix << std::endl;
+  //}
   return 0;
 }

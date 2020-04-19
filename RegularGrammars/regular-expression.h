@@ -78,4 +78,14 @@ private:
   std::string regex_str_;
 };
 
+class TextMatch {
+public:
+  int compile(const std::string& regular_expression);
+  bool match(const std::string& str);
+private:
+  TransitionTable transition_table_;
+  RegularExpression regex_;
+  std::string regex_str_;
+};
+
 #endif
