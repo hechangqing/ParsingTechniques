@@ -78,7 +78,8 @@ int RegularExpression::process_parenthesis(const std::vector<int> &regular_expre
   }
 }
 
-int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx) {
+int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int *end_idx) {
+  assert(end_idx != NULL);
   assert(cur_idx < regular_expression.size());
   int this_char = regular_expression[cur_idx];
   if (this_char == CTRL_LEFT_PARENTHESIS) {
@@ -89,10 +90,20 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
       return -1;
     } else {
       assert(regular_expression[right_parenthesis_idx] == CTRL_RIGHT_PARENTHESIS);
+      if (cur_idx + 1 < regular_expression.size()) {
+        int next_char = regular_expression[cur_idx + 1];
+        if (next_char == CTRL_STAR) {
+          return KLEENE_STAR;
+        } else if (next_char == CTRL_ADD) {
+          return PROPER_SEQUENCE;
+        } else if (next_char == CTRL_OPTINAL) {
+          return OPTINAL;
+        }
+      }
       if (or_indices.size() == 0) {
-        std::cout << right_parenthesis_idx;
+        return NESTING;
       } else {
-        std::cout << right_parenthesis_idx;
+        return ALTERNATIVE;
       }
     }
   }
