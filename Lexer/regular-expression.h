@@ -42,7 +42,7 @@ public:
                           const ControlSymbol right_symbol,
                           int cur_idx,
                           std::vector<int> *or_indices);
-  int recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int *end_idx, std::vector<int> *or_indices);
+  int recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int end_idx, int *sub_end_idx, std::vector<int> *or_indices);
 };
 
 #endif

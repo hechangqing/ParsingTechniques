@@ -21,4 +21,8 @@ private:
 };
 
 int generate_one_char_fa(int ilabel, Graph *fa);
+int fa_kleene_star(Graph *fa);
+int fa_proper_sequence(Graph *fa);
+int fa_optinal(Graph *fa);
+int concate_fa(const Graph &left, const Graph &right, Graph *fa);
 #endif

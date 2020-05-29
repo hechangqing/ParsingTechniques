@@ -81,9 +81,15 @@ int RegularExpression::process_parenthesis(const std::vector<int> &regular_expre
   }
 }
 
-int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int *end_idx, std::vector<int> *or_indices) {
-  assert(end_idx != NULL);
+int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_expression,
+                                              int cur_idx,
+                                              int end_idx,
+                                              int *sub_end_idx,
+                                              std::vector<int> *or_indices) {
+  assert(sub_end_idx != NULL);
   assert(cur_idx < regular_expression.size());
+  assert(cur_idx < end_idx);
+  assert(end_idx <= regular_expression.size());
   int this_char = regular_expression[cur_idx];
   if (this_char == CTRL_LEFT_PARENTHESIS) {
     int right_idx = process_parenthesis(regular_expression, CTRL_LEFT_PARENTHESIS, CTRL_RIGHT_PARENTHESIS, cur_idx, or_indices);
@@ -92,9 +98,9 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
       return -1;
     }
     assert(regular_expression[right_idx] == CTRL_RIGHT_PARENTHESIS);
-    if (right_idx + 1 < regular_expression.size()) {
+    if (right_idx + 1 < end_idx) {
       int next_char = regular_expression[right_idx + 1];
-      *end_idx = right_idx + 1;
+      *sub_end_idx = right_idx + 1;
       if (next_char == CTRL_STAR) {
         return KLEENE_STAR;
       } else if (next_char == CTRL_ADD) {
@@ -103,7 +109,7 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
         return OPTINAL;
       }
     }
-    *end_idx = right_idx;
+    *sub_end_idx = right_idx;
     if (or_indices->size() == 0) {
       return NESTING;
     } else {
@@ -117,9 +123,9 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
       return -1;
     }
     assert(regular_expression[right_idx] == CTRL_RIGHT_BRACKETS);
-    if (right_idx + 1 < regular_expression.size()) {
+    if (right_idx + 1 < end_idx) {
       int next_char = regular_expression[right_idx + 1];
-      *end_idx = right_idx + 1;
+      *sub_end_idx = right_idx + 1;
       if (next_char == CTRL_STAR) {
         return KLEENE_STAR;
       } else if (next_char == CTRL_ADD) {
@@ -128,12 +134,12 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
         return OPTINAL;
       }
     }
-    *end_idx = right_idx;
+    *sub_end_idx = right_idx;
     return SET;
   } else {
-    if (cur_idx + 1 < regular_expression.size()) {
+    if (cur_idx + 1 < end_idx) {
       int next_char = regular_expression[cur_idx + 1];
-      *end_idx = cur_idx + 1;
+      *sub_end_idx = cur_idx + 1;
       if (next_char == CTRL_STAR) {
         return KLEENE_STAR;
       } else if (next_char == CTRL_ADD) {
@@ -142,22 +148,53 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
         return OPTINAL;
       }
     }
+    *sub_end_idx = cur_idx;
     return CONCATENATION;
   }
+  assert(0);
   return 0;
 }
 
+// [start_idx, end_idx)
 int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, Graph *nfa) {
   assert(end_idx <= preprocessed_regex.size());
-  assert(start_idx < end_idx);
+  assert(start_idx <= end_idx);
   assert(start_idx >= 0);
-  if (start_idx + 1 == end_idx) {
+  if (start_idx == end_idx) {
+    // empty nfa
+    return 0;
+  } else if (start_idx + 1 == end_idx) {
     generate_one_char_fa(preprocessed_regex[start_idx], nfa);
     return 0;
   } else {
     std::vector<int> or_indices;
-    int end_idx = 0;
-    int rule_pattern = recognise_rule_pattern(preprocessed_regex, 0, &end_idx, &or_indices);
+    int sub_end_idx = 0;
+    int rule_pattern = recognise_rule_pattern(preprocessed_regex, start_idx, end_idx, &sub_end_idx, &or_indices);
+    Graph nfa_left;
+    if (KLEENE_STAR == rule_pattern || PROPER_SEQUENCE == rule_pattern || OPTINAL == rule_pattern) {
+      int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx, sub_end_idx, &nfa_left);
+      if (KLEENE_STAR == rule_pattern) {
+        fa_kleene_star(&nfa_left);
+      } else if (PROPER_SEQUENCE == rule_pattern) {
+        fa_proper_sequence(&nfa_left);
+      } else if (OPTINAL == rule_pattern) {
+        fa_optinal(&nfa_left);
+      } else {
+        assert(0);
+      }
+    } else if (NESTING == rule_pattern) {
+      int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx + 1, sub_end_idx, &nfa_left);
+    } else if (ALTERNATIVE == rule_pattern) {
+    } else if (SET == rule_pattern) {
+    } else if (CONCATENATION == rule_pattern) {
+      assert(sub_end_idx == start_idx);
+      int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx, start_idx + 1, &nfa_left);
+    } else {
+      assert(0);
+    }
+    Graph nfa_right;
+    int ret = convert_regular_expression_to_NFA(preprocessed_regex, sub_end_idx + 1, end_idx, &nfa_right);
+    concate_fa(nfa_left, nfa_right, nfa);
   }
   return 0;
 }
@@ -167,17 +204,15 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::string &regu
   preprocess_regular_expression(regular_expression, &preprocessed_regex);
 
   for (int i = 0; i < preprocessed_regex.size(); i++) {
-   if (preprocessed_regex[i] < 256) {
-     std::cout << static_cast<char>(preprocessed_regex[i]) << " ";
-   } else {
-     std::cout << preprocessed_regex[i] << " ";
-   }
+    if (preprocessed_regex[i] < 256) {
+      std::cout << static_cast<char>(preprocessed_regex[i]) << " ";
+    } else {
+      std::cout << preprocessed_regex[i] << " ";
+    }
   }
   std::cout << "\n";
 
-  std::vector<int> or_indices;
-  int end_idx = 0;
-  int rule_pattern = recognise_rule_pattern(preprocessed_regex, 0, &end_idx, &or_indices);
-  std::cout << rule_pattern << std::endl;
-  return 0;
+  int ret = convert_regular_expression_to_NFA(preprocessed_regex, 0, preprocessed_regex.size(), nfa);
+
+  return ret;
 }
