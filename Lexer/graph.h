@@ -20,4 +20,5 @@ private:
   std::map<int, State> states_;
 };
 
+int generate_one_char_fa(int ilabel, Graph *fa);
 #endif

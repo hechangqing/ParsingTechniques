@@ -7,7 +7,8 @@ void unit_test() {
   {
     RegularExpression regex;
     Graph nfa;
-    std::string str = "((\\(ab)|c|d)";
+    //std::string str = "((\\(ab)|c|d)\\*";
+    std::string str = "a\\+";
     std::cout << str << std::endl;
     std::cout << str.size() << std::endl;
     regex.convert_regular_expression_to_NFA(str, &nfa);
