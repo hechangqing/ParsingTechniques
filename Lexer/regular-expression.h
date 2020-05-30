@@ -9,7 +9,8 @@
 class RegularExpression {
 public:
   enum ErrorCode {
-    ERROR_UNMATCHED_PARENTHESIS = -2
+    ERROR_UNMATCHED_PARENTHESIS = -2,
+    ERROR_SET = -3
   };
 private:
   enum RulePattern {
@@ -29,7 +30,8 @@ private:
     CTRL_LEFT_PARENTHESIS,
     CTRL_RIGHT_PARENTHESIS,
     CTRL_LEFT_BRACKETS,
-    CTRL_RIGHT_BRACKETS
+    CTRL_RIGHT_BRACKETS,
+    CTRL_RANGE
   };
 public:
   int convert_regular_expression_to_NFA(const std::string &regular_expression,
@@ -43,6 +45,7 @@ public:
                           int cur_idx,
                           std::vector<int> *or_indices);
   int recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int end_idx, int *sub_end_idx, std::vector<int> *or_indices);
+  int get_char_set(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, std::set<int> *char_set);
 };
 
 #endif

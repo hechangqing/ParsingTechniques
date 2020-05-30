@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <set>
 
 int RegularExpression::preprocess_regular_expression(const std::string &regular_expression,
                                                      std::vector<int> *processed) {
@@ -12,7 +13,7 @@ int RegularExpression::preprocess_regular_expression(const std::string &regular_
     int this_char = regular_expression[i];
     if (this_char == '\\' && i+1 < regular_expression.size()) {
       int next_char = regular_expression[i+1];
-      if (next_char == '|' || next_char == '*' || next_char == '+' || next_char == '?' || next_char == '(' || next_char == ')' || next_char == '[' || next_char == ']') {
+      if (next_char == '|' || next_char == '*' || next_char == '+' || next_char == '?' || next_char == '(' || next_char == ')' || next_char == '[' || next_char == ']' || next_char == '-') {
         processed->push_back(next_char);
       } else {
         processed->push_back(this_char);
@@ -36,6 +37,8 @@ int RegularExpression::preprocess_regular_expression(const std::string &regular_
         processed->push_back(CTRL_LEFT_BRACKETS);
       } else if (this_char == ']') {
         processed->push_back(CTRL_RIGHT_BRACKETS);
+      } else if (this_char == '-') {
+        processed->push_back(CTRL_RANGE);
       } else {
         processed->push_back(this_char);
       }
@@ -155,6 +158,39 @@ int RegularExpression::recognise_rule_pattern(const std::vector<int> &regular_ex
   return 0;
 }
 
+int RegularExpression::get_char_set(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, std::set<int> *char_set) {
+  assert(end_idx <= preprocessed_regex.size());
+  assert(start_idx >= 0);
+  assert(start_idx < end_idx);
+  assert(preprocessed_regex[start_idx] == CTRL_LEFT_BRACKETS);
+  assert(preprocessed_regex[end_idx - 1] == CTRL_RIGHT_BRACKETS);
+  int i = start_idx + 1;
+  while (i < end_idx - 1) {
+    int this_char = preprocessed_regex[i];
+    if (i + 1 < end_idx - 1 && preprocessed_regex[i+1] == CTRL_RANGE) {
+      if (i + 2 < end_idx - 1) {
+        int range_end_char = preprocessed_regex[i+2];
+        if (this_char > range_end_char) {
+          std::cerr << "error regular expression: error set" << std::endl;
+          return ERROR_SET;
+        }
+        assert(this_char <= range_end_char);
+        for (int c = this_char; c <= range_end_char; c++) {
+          char_set->insert(c);
+        }
+        i += 3;
+      } else {
+        std::cerr << "error regular expression: error set" << std::endl;
+        return ERROR_SET;
+      }
+    } else {
+      char_set->insert(this_char);
+      i += 1;
+    }
+  }
+  return 0;
+}
+
 // [start_idx, end_idx)
 int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, Graph *nfa) {
   assert(end_idx <= preprocessed_regex.size());
@@ -185,7 +221,20 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
     } else if (NESTING == rule_pattern) {
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx + 1, sub_end_idx, &nfa_left);
     } else if (ALTERNATIVE == rule_pattern) {
+      std::vector<Graph> nfa_vec;
+      or_indices.push_back(sub_end_idx);
+      int this_start_idx = start_idx + 1;
+      for (int i = 0; i < or_indices.size(); i++) {
+        Graph this_nfa;
+        int ret = convert_regular_expression_to_NFA(preprocessed_regex, this_start_idx, or_indices[i], &this_nfa);
+        this_start_idx = or_indices[i] + 1;
+        nfa_vec.push_back(this_nfa);
+      }
+      fa_alternative(nfa_vec, &nfa_left);
     } else if (SET == rule_pattern) {
+      std::set<int> char_set;
+      get_char_set(preprocessed_regex, start_idx, sub_end_idx + 1, &char_set);
+      fa_char_set(char_set, &nfa_left);
     } else if (CONCATENATION == rule_pattern) {
       assert(sub_end_idx == start_idx);
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx, start_idx + 1, &nfa_left);
