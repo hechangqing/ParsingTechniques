@@ -243,7 +243,7 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
     }
     Graph nfa_right;
     int ret = convert_regular_expression_to_NFA(preprocessed_regex, sub_end_idx + 1, end_idx, &nfa_right);
-    concate_fa(nfa_left, nfa_right, nfa);
+    Graph::concate_fa(nfa_left, nfa_right, nfa);
   }
   return 0;
 }

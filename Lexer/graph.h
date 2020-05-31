@@ -7,6 +7,9 @@
 
 class Arc {
 public:
+  enum IlabelValue {
+    EPSILON = 0
+  };
   Arc() {}
   Arc(int new_ilabel, int new_next_state) :
     ilabel(new_ilabel), 
@@ -25,11 +28,19 @@ private:
 
 class Graph {
 public:
+  typedef std::set<int>::iterator FinalStatesIterator;
   Graph() : state_cnt_(0), start_state_id_(0) { }
   int add_state();
+  int max_state_id() const;
+  int num_states() const;
   int set_start(int start_state_id);
+  int get_start() const;
   int set_final(int final_state_id);
+  int remove_final(int final_state_id);
   int add_arc(int src_state_id, const Arc &arc);
+  FinalStatesIterator final_states_begin();
+  FinalStatesIterator final_states_end();
+  static int concate_fa(const Graph &left, const Graph &right, Graph *fa);
 private:
   std::map<int, State> states_;
   int state_cnt_;
@@ -41,7 +52,6 @@ int generate_one_char_fa(int ilabel, Graph *fa);
 int fa_kleene_star(Graph *fa);
 int fa_proper_sequence(Graph *fa);
 int fa_optinal(Graph *fa);
-int concate_fa(const Graph &left, const Graph &right, Graph *fa);
 int fa_alternative(const std::vector<Graph> &nfa_graph, Graph *nfa);
 int fa_char_set(const std::set<int> &char_set, Graph *nfa);
 
