@@ -8,6 +8,22 @@ int State::add_arc(const Arc &arc) {
   return 0;
 }
 
+State::ArcIter State::arcs_begin() {
+  return arcs_.begin();
+}
+
+State::ConstArcIter State::arcs_begin() const {
+  return arcs_.begin();
+}
+
+State::ArcIter State::arcs_end() {
+  return arcs_.end();
+}
+
+State::ConstArcIter State::arcs_end() const {
+  return arcs_.end();
+}
+
 int Graph::add_state() {
   int state_id = state_cnt_;
   state_cnt_ += 1;
@@ -104,6 +120,16 @@ int Graph::concate_fa(const Graph &left, const Graph &right, Graph *fa) {
   for (std::map<int, State>::const_iterator iter = right.states_.begin();
        iter != right.states_.end(); ++iter) {
     int this_state_id = iter->first;
+    int new_state_id = this_state_id + left_max_state_id + 1;
+    const State &this_state = iter->second;
+    State::ConstArcIter arc_iter = this_state.arcs_begin();
+    for (; arc_iter != this_state.arcs_end(); arc_iter++) {
+      int ilabel = arc_iter->first;
+      const std::vector<Arc> &this_ilabel_arcs = arc_iter->second;
+      for (int i = 0; i < this_ilabel_arcs.size(); i++) {
+        int new_next_state = this_ilabel_arcs[i].next_state + left_max_state_id + 1;
+      }
+    }
   }
   return 0;
 }

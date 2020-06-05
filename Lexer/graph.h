@@ -21,7 +21,13 @@ public:
 
 class State {
 public:
+  typedef std::map<int, std::vector<Arc> >::iterator ArcIter;
+  typedef std::map<int, std::vector<Arc> >::const_iterator ConstArcIter;
   int add_arc(const Arc &arc);
+  ArcIter arcs_begin();
+  ConstArcIter arcs_begin() const;
+  ArcIter arcs_end();
+  ConstArcIter arcs_end() const;
 private:
   std::map<int, std::vector<Arc> > arcs_;
 };
