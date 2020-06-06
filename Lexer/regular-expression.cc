@@ -210,11 +210,11 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
     if (KLEENE_STAR == rule_pattern || PROPER_SEQUENCE == rule_pattern || OPTINAL == rule_pattern) {
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx, sub_end_idx, &nfa_left);
       if (KLEENE_STAR == rule_pattern) {
-        fa_kleene_star(&nfa_left);
+        Graph::fa_kleene_star(&nfa_left);
       } else if (PROPER_SEQUENCE == rule_pattern) {
-        fa_proper_sequence(&nfa_left);
+        Graph::fa_proper_sequence(&nfa_left);
       } else if (OPTINAL == rule_pattern) {
-        fa_optinal(&nfa_left);
+        Graph::fa_optinal(&nfa_left);
       } else {
         assert(0);
       }
@@ -230,7 +230,7 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
         this_start_idx = or_indices[i] + 1;
         nfa_vec.push_back(this_nfa);
       }
-      fa_alternative(nfa_vec, &nfa_left);
+      Graph::fa_alternative(nfa_vec, &nfa_left);
     } else if (SET == rule_pattern) {
       std::set<int> char_set;
       get_char_set(preprocessed_regex, start_idx, sub_end_idx + 1, &char_set);
@@ -265,3 +265,4 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::string &regu
 
   return ret;
 }
+
