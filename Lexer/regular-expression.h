@@ -34,18 +34,19 @@ private:
     CTRL_RANGE
   };
 public:
-  int convert_regular_expression_to_NFA(const std::string &regular_expression,
+  static int convert_regular_expression_to_NFA(const std::string &regular_expression,
                                         Graph *nfa);
-  int convert_regular_expression_to_NFA(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, Graph *nfa);
-  int preprocess_regular_expression(const std::string &regular_expression,
+  static int convert_regular_expression_to_NFA(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, Graph *nfa);
+  static int convert_regular_expression_to_DFA(const std::string &regular_expression, Graph *dfa);
+  static int preprocess_regular_expression(const std::string &regular_expression,
                                     std::vector<int> *processed);
-  int process_parenthesis(const std::vector<int> &regular_expression,
+  static int process_parenthesis(const std::vector<int> &regular_expression,
                           const ControlSymbol left_symbol,
                           const ControlSymbol right_symbol,
                           int cur_idx,
                           std::vector<int> *or_indices);
-  int recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int end_idx, int *sub_end_idx, std::vector<int> *or_indices);
-  int get_char_set(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, std::set<int> *char_set);
+  static int recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int end_idx, int *sub_end_idx, std::vector<int> *or_indices);
+  static int get_char_set(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, std::set<int> *char_set);
 };
 
 #endif

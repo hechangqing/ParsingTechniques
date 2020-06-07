@@ -200,6 +200,17 @@ int Graph::concate_fa(const Graph &left, const Graph &right, Graph *fa) {
 }
 
 int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, Graph *fa) {
+  std::vector<int> rule_ids;
+  for (int i = 0; i < fa_graph_vec.size(); i++) {
+    rule_ids.push_back(i);
+  }
+  std::map<int, int> state_to_rule_id;
+  fa_alternative(fa_graph_vec, rule_ids, fa, &state_to_rule_id);
+  return 0;
+}
+
+int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, const std::vector<int> &rule_ids, Graph *fa, std::map<int, int> *fa_state_to_rule_id) {
+  assert(rule_ids.size() == fa_graph_vec.size());
   if (fa_graph_vec.size() == 0) {
   } else if (fa_graph_vec.size() == 1) {
     *fa = fa_graph_vec[0];
@@ -223,6 +234,7 @@ int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, Graph *fa) {
         }
         if (this_fa.is_final(this_state_id)) {
           orig_final_state_ids.push_back(new_state_id);
+          (*fa_state_to_rule_id)[new_state_id] = rule_ids[i];
         }
         const State &this_state = iter->second;
         for (State::ConstArcIter arc_iter = this_state.arcs_begin();
@@ -230,8 +242,11 @@ int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, Graph *fa) {
           int ilabel = arc_iter->first;
           const std::vector<Arc> &this_ilabel_arcs = arc_iter->second;
           for (int a = 0; a < this_ilabel_arcs.size(); a++) {
-            int new_next_state = this_ilabel_arcs[i].next_state + cur_max_state_id + 1;
+            int new_next_state = this_ilabel_arcs[a].next_state + cur_max_state_id + 1;
             fa->add_arc(new_state_id, Arc(ilabel, new_next_state));
+            if (this_fa.is_final(this_ilabel_arcs[a].next_state)) {
+              (*fa_state_to_rule_id)[new_next_state] = rule_ids[i];
+            }
           }
         }
       }
@@ -359,6 +374,11 @@ int Graph::SubSetState::gen_key() {
 }
 
 int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa) {
+  convert_nfa_to_dfa(nfa, dfa, NULL);
+  return 0;
+}
+
+int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa, std::map<int, std::set<int> > *dfa_state_to_nfa_states) {
   std::queue<SubSetState> que;
   std::map<std::string, SubSetState> dfa_states;
 
@@ -366,14 +386,14 @@ int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa) {
   dfa_start.orig_state_ids.insert(nfa.get_start());
   dfa_start.gen_key();
   dfa_start.state_id = dfa->add_state();
-  dfa->start_start(dfa_start.state_id);
+  dfa->set_start(dfa_start.state_id);
   que.push(dfa_start);
   dfa_states[dfa_start.key] = dfa_start;
 
   while (!que.empty()) {
     SubSetState this_dfa_state = que.front();
     que.pop();
-    std::map<int, std::set<int> > ilabel_to_orig_states;
+    std::map<int, SubSetState > ilabel_to_orig_states;
     for (std::set<int>::iterator src_iter = this_dfa_state.orig_state_ids.begin();
          src_iter != this_dfa_state.orig_state_ids.end(); src_iter++) {
       int this_nfa_src_state_id = *src_iter;
@@ -384,14 +404,16 @@ int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa) {
         const std::vector<Arc> &this_nfa_ilabel_arcs = arc_iter->second;
         for (std::vector<Arc>::const_iterator arci = this_nfa_ilabel_arcs.begin();
              arci != this_nfa_ilabel_arcs.end(); arci++) {
-          ilabel_to_orig_states[ilabel].insert(arci->next_state);
+          ilabel_to_orig_states[ilabel].orig_state_ids.insert(arci->next_state);
+          if (nfa.is_final(arci->next_state)) {
+            ilabel_to_orig_states[ilabel].is_final = true;
+          }
         }
       }
     }
-    for (std::map<int, std::set<int> >::iterator iter = ilabel_to_orig_states.begin();
+    for (std::map<int, SubSetState >::iterator iter = ilabel_to_orig_states.begin();
          iter != ilabel_to_orig_states.end(); iter++) {
-      SubSetState new_dfa_state;
-      new_dfa_state.orig_state_ids = iter->second;
+      SubSetState &new_dfa_state = iter->second;
       new_dfa_state.gen_key();
       int next_new_dfa_state_id = 0;
       std::map<std::string, SubSetState>::iterator dfa_iter = dfa_states.find(new_dfa_state.key);
@@ -405,6 +427,17 @@ int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa) {
       }
       int ilabel = iter->first;
       dfa->add_arc(this_dfa_state.state_id, Arc(ilabel, next_new_dfa_state_id));
+      if (new_dfa_state.is_final) {
+        dfa->set_final(next_new_dfa_state_id);
+      }
+    }
+  }
+
+  if (dfa_state_to_nfa_states) {
+    for (std::map<std::string, SubSetState>::iterator iter = dfa_states.begin();
+         iter != dfa_states.end(); iter++) {
+      SubSetState &this_subsetstate = iter->second;
+      (*dfa_state_to_nfa_states)[this_subsetstate.state_id] = this_subsetstate.orig_state_ids;
     }
   }
   return 0;

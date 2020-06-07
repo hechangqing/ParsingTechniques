@@ -55,17 +55,21 @@ public:
   const State &get_state(int state_id) const;
   static int concate_fa(const Graph &left, const Graph &right, Graph *fa);
   static int fa_alternative(const std::vector<Graph> &fa_graph, Graph *fa);
+  static int fa_alternative(const std::vector<Graph> &fa_graph, const std::vector<int> &rule_ids, Graph *fa, std::map<int, int> *final_state_to_rule_id);
   static int fa_proper_sequence(Graph *fa);
   static int fa_kleene_star(Graph *fa);
   static int fa_optinal(Graph *fa);
   static int eliminate_eps_arc(Graph *fa);
   static int convert_nfa_to_dfa(const Graph &nfa, Graph *dfa);
+  static int convert_nfa_to_dfa(const Graph &nfa, Graph *dfa, std::map<int, std::set<int> > *dfa_state_to_nfa_states);
 private:
   struct SubSetState {
+    SubSetState() : is_final(false) {}
     std::string key;
     std::set<int> orig_state_ids;
     int state_id;
     int gen_key();
+    bool is_final;
     bool operator<(const SubSetState &b) {
       return key < b.key;
     }

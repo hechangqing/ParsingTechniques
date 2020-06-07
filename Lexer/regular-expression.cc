@@ -266,3 +266,9 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::string &regu
   return ret;
 }
 
+int RegularExpression::convert_regular_expression_to_DFA(const std::string &regular_expression, Graph *dfa) {
+  Graph nfa;
+  int ret = convert_regular_expression_to_NFA(regular_expression, &nfa);
+  Graph::convert_nfa_to_dfa(nfa, dfa);
+  return ret;
+}
