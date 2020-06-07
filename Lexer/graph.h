@@ -53,6 +53,7 @@ public:
   FinalStatesIterator final_states_begin();
   FinalStatesIterator final_states_end();
   const State &get_state(int state_id) const;
+  State &get_state(int state_id);
   static int concate_fa(const Graph &left, const Graph &right, Graph *fa);
   static int fa_alternative(const std::vector<Graph> &fa_graph, Graph *fa);
   static int fa_alternative(const std::vector<Graph> &fa_graph, const std::vector<int> &rule_ids, Graph *fa, std::map<int, int> *final_state_to_rule_id);

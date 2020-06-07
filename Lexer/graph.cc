@@ -108,6 +108,11 @@ const State &Graph::get_state(int state_id) const {
   return states_.at(state_id);
 }
 
+State &Graph::get_state(int state_id) {
+  assert(states_.find(state_id) != states_.end());
+  return states_.at(state_id);
+}
+
 int generate_one_char_fa(int ilabel, Graph *fa) {
   assert(fa != NULL);
   int start_state = fa->add_state();
