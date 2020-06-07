@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <queue>
+#include <sstream>
 
 int State::add_arc(const Arc &arc) {
   arcs_[arc.ilabel].push_back(arc);
@@ -342,6 +343,69 @@ int Graph::eliminate_eps_arc(Graph *fa) {
   for (std::vector<int>::iterator iter = invalid_state_ids.begin();
        iter != invalid_state_ids.end(); iter++) {
     new_fa.states_.erase(*iter);
+  }
+  return 0;
+}
+
+int Graph::SubSetState::gen_key() {
+  key.clear();
+  std::stringstream ss;
+  for (std::set<int>::const_iterator iter = orig_state_ids.begin();
+       iter != orig_state_ids.end(); iter++) {
+    ss << *iter << ",";
+  }
+  key = ss.str();
+  return 0;
+}
+
+int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa) {
+  std::queue<SubSetState> que;
+  std::map<std::string, SubSetState> dfa_states;
+
+  SubSetState dfa_start;
+  dfa_start.orig_state_ids.insert(nfa.get_start());
+  dfa_start.gen_key();
+  dfa_start.state_id = dfa->add_state();
+  dfa->start_start(dfa_start.state_id);
+  que.push(dfa_start);
+  dfa_states[dfa_start.key] = dfa_start;
+
+  while (!que.empty()) {
+    SubSetState this_dfa_state = que.front();
+    que.pop();
+    std::map<int, std::set<int> > ilabel_to_orig_states;
+    for (std::set<int>::iterator src_iter = this_dfa_state.orig_state_ids.begin();
+         src_iter != this_dfa_state.orig_state_ids.end(); src_iter++) {
+      int this_nfa_src_state_id = *src_iter;
+      const State &this_nfa_src_state = nfa.get_state(this_nfa_src_state_id);
+      for (State::ConstArcIter arc_iter = this_nfa_src_state.arcs_begin();
+           arc_iter != this_nfa_src_state.arcs_end(); arc_iter++) {
+        int ilabel = arc_iter->first;
+        const std::vector<Arc> &this_nfa_ilabel_arcs = arc_iter->second;
+        for (std::vector<Arc>::const_iterator arci = this_nfa_ilabel_arcs.begin();
+             arci != this_nfa_ilabel_arcs.end(); arci++) {
+          ilabel_to_orig_states[ilabel].insert(arci->next_state);
+        }
+      }
+    }
+    for (std::map<int, std::set<int> >::iterator iter = ilabel_to_orig_states.begin();
+         iter != ilabel_to_orig_states.end(); iter++) {
+      SubSetState new_dfa_state;
+      new_dfa_state.orig_state_ids = iter->second;
+      new_dfa_state.gen_key();
+      int next_new_dfa_state_id = 0;
+      std::map<std::string, SubSetState>::iterator dfa_iter = dfa_states.find(new_dfa_state.key);
+      if (dfa_iter == dfa_states.end()) {
+        new_dfa_state.state_id = dfa->add_state();
+        dfa_states[new_dfa_state.key] = new_dfa_state;
+        que.push(new_dfa_state);
+        next_new_dfa_state_id = new_dfa_state.state_id;
+      } else {
+        next_new_dfa_state_id = dfa_iter->second.state_id;
+      }
+      int ilabel = iter->first;
+      dfa->add_arc(this_dfa_state.state_id, Arc(ilabel, next_new_dfa_state_id));
+    }
   }
   return 0;
 }

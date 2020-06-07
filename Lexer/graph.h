@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <string>
 
 class Arc {
 public:
@@ -58,6 +59,17 @@ public:
   static int fa_kleene_star(Graph *fa);
   static int fa_optinal(Graph *fa);
   static int eliminate_eps_arc(Graph *fa);
+  static int convert_nfa_to_dfa(const Graph &nfa, Graph *dfa);
+private:
+  struct SubSetState {
+    std::string key;
+    std::set<int> orig_state_ids;
+    int state_id;
+    int gen_key();
+    bool operator<(const SubSetState &b) {
+      return key < b.key;
+    }
+  };
 private:
   std::map<int, State> states_;
   int state_cnt_;
