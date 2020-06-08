@@ -272,3 +272,30 @@ int RegularExpression::convert_regular_expression_to_DFA(const std::string &regu
   Graph::convert_nfa_to_dfa(nfa, dfa);
   return ret;
 }
+
+int RegularExpression::compile(const std::string &regex_str) {
+  int ret = convert_regular_expression_to_DFA(regex_str, &dfa_);
+  return ret;
+}
+
+bool RegularExpression::accept(const std::string &str) {
+  int cur_state = dfa_.get_start();
+  for (int i = 0; i < str.size(); i++) {
+    int this_char = str[i];
+    const State &state = dfa_.get_state(cur_state);
+    int next_state = 0;
+    if (state.has_ilabel(this_char)) {
+      const std::vector<Arc> &arcs = state.get_arcs(this_char);
+      assert(arcs.size() == 1);
+      next_state = arcs[0].next_state;
+      cur_state = next_state;
+    } else {
+      return false;
+    }
+  }
+  if (dfa_.is_final(cur_state)) {
+    return true;
+  } else {
+    return false;
+  }
+}

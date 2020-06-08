@@ -47,6 +47,11 @@ public:
                           std::vector<int> *or_indices);
   static int recognise_rule_pattern(const std::vector<int> &regular_expression, int cur_idx, int end_idx, int *sub_end_idx, std::vector<int> *or_indices);
   static int get_char_set(const std::vector<int> &preprocessed_regex, int start_idx, int end_idx, std::set<int> *char_set);
+public:
+  int compile(const std::string &regex_str);
+  bool accept(const std::string &str);
+private:
+  Graph dfa_;
 };
 
 #endif

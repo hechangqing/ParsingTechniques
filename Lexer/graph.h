@@ -52,8 +52,10 @@ public:
   int add_arc(int src_state_id, const Arc &arc);
   FinalStatesIterator final_states_begin();
   FinalStatesIterator final_states_end();
+  bool state_has_arcs(int state_id) const;
   const State &get_state(int state_id) const;
   State &get_state(int state_id);
+  std::string to_str() const;
   static int concate_fa(const Graph &left, const Graph &right, Graph *fa);
   static int fa_alternative(const std::vector<Graph> &fa_graph, Graph *fa);
   static int fa_alternative(const std::vector<Graph> &fa_graph, const std::vector<int> &rule_ids, Graph *fa, std::map<int, int> *final_state_to_rule_id);

@@ -103,6 +103,9 @@ Graph::FinalStatesIterator Graph::final_states_end() {
   return final_states_.end();
 }
 
+bool Graph::state_has_arcs(int state_id) const {
+  return states_.find(state_id) != states_.end();
+}
 const State &Graph::get_state(int state_id) const {
   assert(states_.find(state_id) != states_.end());
   return states_.at(state_id);
@@ -111,6 +114,41 @@ const State &Graph::get_state(int state_id) const {
 State &Graph::get_state(int state_id) {
   assert(states_.find(state_id) != states_.end());
   return states_.at(state_id);
+}
+
+std::string Graph::to_str() const {
+  std::stringstream ss;
+  ss << " start state " << get_start() << std::endl;
+  ss << " final states ";
+  for (std::set<int>::const_iterator iter = final_states_.begin();
+       iter != final_states_.end(); iter++) {
+    ss << *iter << " ";
+  }
+  ss << "\n";
+  for (std::map<int, State>::const_iterator state_iter = states_.begin();
+       state_iter != states_.end(); state_iter++) {
+    int this_state_id = state_iter->first;
+    const State &this_state = state_iter->second;
+    for (State::ConstArcIter arc_iter = this_state.arcs_begin();
+         arc_iter != this_state.arcs_end(); arc_iter++) {
+      int this_ilabel = arc_iter->first;
+      const std::vector<Arc> &this_ilabel_arcs = arc_iter->second;
+      for (std::vector<Arc>::const_iterator iter = this_ilabel_arcs.begin();
+           iter != this_ilabel_arcs.end(); iter++) {
+        int next_state = iter->next_state;
+        ss << this_state_id << " "
+           << next_state << " "
+           << "("
+           << this_ilabel << ", "
+           << static_cast<char>(this_ilabel) << ") ";
+        if (is_final(this_state_id)) {
+           ss << "is_final";
+        }
+        ss << "\n";
+      }
+    }
+  }
+  return ss.str();
 }
 
 int generate_one_char_fa(int ilabel, Graph *fa) {
@@ -167,15 +205,11 @@ int Graph::concate_fa(const Graph &left, const Graph &right, Graph *fa) {
   int left_max_state_id = left.max_state_id();
 
   int new_right_start_state_id = right.get_start() + left_max_state_id + 1;
-  std::vector<int> new_final_state_vec;
   for (std::map<int, State>::const_iterator iter = right.states_.begin();
        iter != right.states_.end(); ++iter) {
     int this_state_id = iter->first;
     int new_state_id = this_state_id + left_max_state_id + 1;
     fa->add_state();
-    if (right.is_final(this_state_id)) {
-      new_final_state_vec.push_back(new_state_id);
-    }
     const State &this_state = iter->second;
     State::ConstArcIter arc_iter = this_state.arcs_begin();
     for (; arc_iter != this_state.arcs_end(); arc_iter++) {
@@ -198,8 +232,10 @@ int Graph::concate_fa(const Graph &left, const Graph &right, Graph *fa) {
   for (int i = 0; i < orig_final_state_vec.size(); i++) {
     fa->remove_final(orig_final_state_vec[i]);
   }
-  for (int i = 0; i < new_final_state_vec.size(); i++) {
-    fa->set_final(new_final_state_vec[i]);
+
+  for (std::set<int>::const_iterator iter = right.final_states_.begin();
+       iter != right.final_states_.end(); iter++) {
+    fa->set_final(*iter + left_max_state_id + 1);
   }
   return 0;
 }
@@ -283,15 +319,17 @@ int eps_cloure(const Graph &graph, int start_state, std::set<int> *state_set) {
   while (!que.empty()) {
     int this_state_id = que.front();
     que.pop();
-    const State &this_state = graph.get_state(this_state_id);
-    if (this_state.has_ilabel(Arc::EPSILON)) {
-      const std::vector<Arc> &eps_arcs = this_state.get_arcs(Arc::EPSILON);
-      for (std::vector<Arc>::const_iterator iter = eps_arcs.begin();
-           iter != eps_arcs.end(); iter++) {
-        int this_next_state = iter->next_state;
-        if (state_set->find(this_next_state) != state_set->end()) {
-          que.push(this_next_state);
-          state_set->insert(this_next_state);
+    if (graph.state_has_arcs(this_state_id)) {
+      const State &this_state = graph.get_state(this_state_id);
+      if (this_state.has_ilabel(Arc::EPSILON)) {
+        const std::vector<Arc> &eps_arcs = this_state.get_arcs(Arc::EPSILON);
+        for (std::vector<Arc>::const_iterator iter = eps_arcs.begin();
+             iter != eps_arcs.end(); iter++) {
+          int this_next_state = iter->next_state;
+          if (state_set->find(this_next_state) == state_set->end()) {
+            que.push(this_next_state);
+            state_set->insert(this_next_state);
+          }
         }
       }
     }
@@ -322,24 +360,29 @@ int Graph::eliminate_eps_arc(Graph *fa) {
   for (std::set<int>::const_iterator iter = valid_states.begin();
        iter != valid_states.end(); iter++) {
     int this_valid_state = *iter;
+    std::cout << "valid " << *iter << std::endl;
     std::set<int> this_valid_state_eps_cloure;
     eps_cloure(*fa, this_valid_state, &this_valid_state_eps_cloure);
     this_valid_state_eps_cloure.erase(this_valid_state);
 
     for (std::set<int>::const_iterator eps_iter = this_valid_state_eps_cloure.begin();
          eps_iter != this_valid_state_eps_cloure.end(); eps_iter++) {
-      const State &this_state = fa->get_state(*eps_iter);
-      if (fa->is_final(*eps_iter)) {
-        new_fa.set_final(this_valid_state);
-      }
-      for (State::ConstArcIter arc_iter = this_state.arcs_begin();
-           arc_iter != this_state.arcs_end(); arc_iter++) {
-        int this_ilabel = arc_iter->first;
-        if (Arc::EPSILON != this_ilabel) {
-          const std::vector<Arc> &this_arcs = arc_iter->second;
-          for (std::vector<Arc>::const_iterator insert_arc_iter = this_arcs.begin();
-               insert_arc_iter != this_arcs.end(); insert_arc_iter++) {
-            new_fa.add_arc(this_valid_state, *insert_arc_iter);
+      std::cout << *eps_iter << "\n";
+      if (fa->state_has_arcs(*eps_iter)) {
+        const State &this_state = fa->get_state(*eps_iter);
+        if (fa->is_final(*eps_iter)) {
+          new_fa.set_final(this_valid_state);
+        }
+        for (State::ConstArcIter arc_iter = this_state.arcs_begin();
+             arc_iter != this_state.arcs_end(); arc_iter++) {
+          int this_ilabel = arc_iter->first;
+          if (Arc::EPSILON != this_ilabel) {
+            const std::vector<Arc> &this_arcs = arc_iter->second;
+            for (std::vector<Arc>::const_iterator insert_arc_iter = this_arcs.begin();
+                 insert_arc_iter != this_arcs.end(); insert_arc_iter++) {
+              std::cout << "add" << this_valid_state << "\n";
+              new_fa.add_arc(this_valid_state, *insert_arc_iter);
+            }
           }
         }
       }
@@ -358,12 +401,17 @@ int Graph::eliminate_eps_arc(Graph *fa) {
     if (this_state.num_arcs() == 0) {
       invalid_state_ids.push_back(this_state_id);
     }
+    if (valid_states.find(this_state_id) == valid_states.end()) {
+      invalid_state_ids.push_back(this_state_id);
+    }
   }
 
   for (std::vector<int>::iterator iter = invalid_state_ids.begin();
        iter != invalid_state_ids.end(); iter++) {
     new_fa.states_.erase(*iter);
   }
+
+  *fa = new_fa;
   return 0;
 }
 
@@ -402,16 +450,18 @@ int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa, std::map<int, std::s
     for (std::set<int>::iterator src_iter = this_dfa_state.orig_state_ids.begin();
          src_iter != this_dfa_state.orig_state_ids.end(); src_iter++) {
       int this_nfa_src_state_id = *src_iter;
-      const State &this_nfa_src_state = nfa.get_state(this_nfa_src_state_id);
-      for (State::ConstArcIter arc_iter = this_nfa_src_state.arcs_begin();
-           arc_iter != this_nfa_src_state.arcs_end(); arc_iter++) {
-        int ilabel = arc_iter->first;
-        const std::vector<Arc> &this_nfa_ilabel_arcs = arc_iter->second;
-        for (std::vector<Arc>::const_iterator arci = this_nfa_ilabel_arcs.begin();
-             arci != this_nfa_ilabel_arcs.end(); arci++) {
-          ilabel_to_orig_states[ilabel].orig_state_ids.insert(arci->next_state);
-          if (nfa.is_final(arci->next_state)) {
-            ilabel_to_orig_states[ilabel].is_final = true;
+      if (nfa.state_has_arcs(this_nfa_src_state_id)) {
+        const State &this_nfa_src_state = nfa.get_state(this_nfa_src_state_id);
+        for (State::ConstArcIter arc_iter = this_nfa_src_state.arcs_begin();
+             arc_iter != this_nfa_src_state.arcs_end(); arc_iter++) {
+          int ilabel = arc_iter->first;
+          const std::vector<Arc> &this_nfa_ilabel_arcs = arc_iter->second;
+          for (std::vector<Arc>::const_iterator arci = this_nfa_ilabel_arcs.begin();
+               arci != this_nfa_ilabel_arcs.end(); arci++) {
+            ilabel_to_orig_states[ilabel].orig_state_ids.insert(arci->next_state);
+            if (nfa.is_final(arci->next_state)) {
+              ilabel_to_orig_states[ilabel].is_final = true;
+            }
           }
         }
       }
