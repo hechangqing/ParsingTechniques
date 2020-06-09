@@ -40,7 +40,8 @@ private:
 class Graph {
 public:
   typedef std::set<int>::iterator FinalStatesIterator;
-  Graph() : state_cnt_(0), start_state_id_(0) { }
+  Graph() : state_cnt_(0), start_state_id_(0), max_state_id_(-1) { }
+  bool empty() const;
   int add_state();
   int max_state_id() const;
   int num_states() const;

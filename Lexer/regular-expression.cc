@@ -219,7 +219,9 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
         assert(0);
       }
     } else if (NESTING == rule_pattern) {
+      //std::cout << "nesting " << start_idx + 1 << " " << sub_end_idx << "\n";
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx + 1, sub_end_idx, &nfa_left);
+      std::cout << " this \n" << nfa_left.to_str();
     } else if (ALTERNATIVE == rule_pattern) {
       std::vector<Graph> nfa_vec;
       or_indices.push_back(sub_end_idx);
@@ -238,12 +240,15 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
     } else if (CONCATENATION == rule_pattern) {
       assert(sub_end_idx == start_idx);
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx, start_idx + 1, &nfa_left);
+      std::cout << " concat \n" << nfa_left.to_str();
     } else {
       assert(0);
     }
     Graph nfa_right;
     int ret = convert_regular_expression_to_NFA(preprocessed_regex, sub_end_idx + 1, end_idx, &nfa_right);
+    std::cout << " concat right \n" << nfa_right.to_str();
     Graph::concate_fa(nfa_left, nfa_right, nfa);
+    std::cout << " concat result \n" << nfa->to_str();
   }
   return 0;
 }
@@ -269,7 +274,11 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::string &regu
 int RegularExpression::convert_regular_expression_to_DFA(const std::string &regular_expression, Graph *dfa) {
   Graph nfa;
   int ret = convert_regular_expression_to_NFA(regular_expression, &nfa);
+  std::cout << "eps-nfa\n" << nfa.to_str();
+  Graph::eliminate_eps_arc(&nfa);
+  std::cout << "nfa\n" << nfa.to_str();
   Graph::convert_nfa_to_dfa(nfa, dfa);
+  std::cout << "dfa\n" << dfa->to_str();
   return ret;
 }
 
@@ -282,13 +291,17 @@ bool RegularExpression::accept(const std::string &str) {
   int cur_state = dfa_.get_start();
   for (int i = 0; i < str.size(); i++) {
     int this_char = str[i];
-    const State &state = dfa_.get_state(cur_state);
-    int next_state = 0;
-    if (state.has_ilabel(this_char)) {
-      const std::vector<Arc> &arcs = state.get_arcs(this_char);
-      assert(arcs.size() == 1);
-      next_state = arcs[0].next_state;
-      cur_state = next_state;
+    if (dfa_.state_has_arcs(cur_state)) {
+      const State &state = dfa_.get_state(cur_state);
+      int next_state = 0;
+      if (state.has_ilabel(this_char)) {
+        const std::vector<Arc> &arcs = state.get_arcs(this_char);
+        assert(arcs.size() == 1);
+        next_state = arcs[0].next_state;
+        cur_state = next_state;
+      } else {
+        return false;
+      }
     } else {
       return false;
     }

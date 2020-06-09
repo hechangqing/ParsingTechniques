@@ -10,9 +10,128 @@ void unit_test_regular_expression() {
     std::string regex_str = "a";
     regex.compile(regex_str);
 
-    assert(regex.accept("a") == true);
+    assert(regex.accept("") == false);
     assert(regex.accept("b") == false);
+    assert(regex.accept("ba") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept(" a ") == false);
+
+    assert(regex.accept("a") == true);
   }
+  {
+    RegularExpression regex;
+    std::string regex_str = "ab";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("b") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+
+    assert(regex.accept("ab") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "a?";
+    regex.compile(regex_str);
+
+    assert(regex.accept("b") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("aa") == false);
+    assert(regex.accept("aa ") == false);
+    assert(regex.accept(" a") == false);
+    assert(regex.accept(" a ") == false);
+
+    assert(regex.accept("") == true);
+    assert(regex.accept("a") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "a+";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("b") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("aa ") == false);
+    assert(regex.accept(" a") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept(" aaa") == false);
+    assert(regex.accept("aaa ") == false);
+    assert(regex.accept(" aaa ") == false);
+    assert(regex.accept("  aaa ") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("aa") == true);
+    assert(regex.accept("aaa") == true);
+    assert(regex.accept("aaaa") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "a*";
+    regex.compile(regex_str);
+
+    assert(regex.accept("b") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("aa ") == false);
+    assert(regex.accept(" a") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept(" aaa") == false);
+    assert(regex.accept("aaa ") == false);
+    assert(regex.accept(" aaa ") == false);
+    assert(regex.accept("  aaa ") == false);
+
+    assert(regex.accept("") == true);
+    assert(regex.accept("a") == true);
+    assert(regex.accept("aa") == true);
+    assert(regex.accept("aaa") == true);
+    assert(regex.accept("aaaa") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(a)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("b") == false);
+    assert(regex.accept("ba") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept(" a ") == false);
+
+    assert(regex.accept("a") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(ab)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("b") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+
+    assert(regex.accept("ab") == true);
+  }
+
 }
 
 void unit_test() {
@@ -68,9 +187,31 @@ void debug() {
   //  std::cout << c.to_str();
   //}
 
+  //{
+  //  RegularExpression regex;
+  //  std::string regex_str = "ab";
+  //  Graph nfa;
+  //  regex.convert_regular_expression_to_NFA(regex_str, &nfa);
+  //  std::cout << "eps-nfa begin " << std::string(10, '-') << std::endl;
+  //  std::cout << nfa.to_str();
+  //  std::cout << "eps-nfa end " << std::string(10, '-') << std::endl;
+
+  //  Graph::eliminate_eps_arc(&nfa);
+
+  //  std::cout << "nfa begin " << std::string(10, '-') << std::endl;
+  //  std::cout << nfa.to_str();
+  //  std::cout << "nfa end " << std::string(10, '-') << std::endl;
+
+  //  Graph dfa;
+  //  Graph::convert_nfa_to_dfa(nfa, &dfa);
+  //  std::cout << "dfa begin " << std::string(10, '-') << std::endl;
+  //  std::cout << dfa.to_str();
+  //  std::cout << "dfa end " << std::string(10, '-') << std::endl;
+  //}
+
   {
     RegularExpression regex;
-    std::string regex_str = "ab";
+    std::string regex_str = "[ab]";
     Graph nfa;
     regex.convert_regular_expression_to_NFA(regex_str, &nfa);
     std::cout << "eps-nfa begin " << std::string(10, '-') << std::endl;
@@ -92,8 +233,8 @@ void debug() {
 }
 
 int main() {
-  unit_test_regular_expression();
+  //unit_test_regular_expression();
   //unit_test();
-  //debug();
+  debug();
   return 0;
 }

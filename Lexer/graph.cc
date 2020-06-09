@@ -44,6 +44,10 @@ bool State::has_ilabel(int ilabel) const {
   return arcs_.find(ilabel) != arcs_.end();
 }
 
+bool Graph::empty() const {
+  return states_.empty();
+}
+
 int Graph::add_state() {
   int state_id = state_cnt_;
   if (state_id > max_state_id_) {
@@ -201,8 +205,17 @@ int Graph::fa_optinal(Graph *fa) {
 }
 
 int Graph::concate_fa(const Graph &left, const Graph &right, Graph *fa) {
+  if (right.empty()) {
+    *fa = left;
+    return 0;
+  }
+  if (left.empty()) {
+    *fa = right;
+    return 0;
+  }
   *fa = left;
   int left_max_state_id = left.max_state_id();
+  std::cout << "left_max_state_id " << left_max_state_id << std::endl;
 
   int new_right_start_state_id = right.get_start() + left_max_state_id + 1;
   for (std::map<int, State>::const_iterator iter = right.states_.begin();
@@ -334,6 +347,7 @@ int eps_cloure(const Graph &graph, int start_state, std::set<int> *state_set) {
       }
     }
   }
+  return 0;
 }
 
 int Graph::eliminate_eps_arc(Graph *fa) {
@@ -360,19 +374,24 @@ int Graph::eliminate_eps_arc(Graph *fa) {
   for (std::set<int>::const_iterator iter = valid_states.begin();
        iter != valid_states.end(); iter++) {
     int this_valid_state = *iter;
-    std::cout << "valid " << *iter << std::endl;
+
     std::set<int> this_valid_state_eps_cloure;
     eps_cloure(*fa, this_valid_state, &this_valid_state_eps_cloure);
+
+    for (std::set<int>::const_iterator eps_iter = this_valid_state_eps_cloure.begin();
+         eps_iter != this_valid_state_eps_cloure.end(); eps_iter++) {
+      if (fa->is_final(*eps_iter)) {
+        new_fa.set_final(this_valid_state);
+      }
+    }
+
     this_valid_state_eps_cloure.erase(this_valid_state);
 
     for (std::set<int>::const_iterator eps_iter = this_valid_state_eps_cloure.begin();
          eps_iter != this_valid_state_eps_cloure.end(); eps_iter++) {
-      std::cout << *eps_iter << "\n";
+
       if (fa->state_has_arcs(*eps_iter)) {
         const State &this_state = fa->get_state(*eps_iter);
-        if (fa->is_final(*eps_iter)) {
-          new_fa.set_final(this_valid_state);
-        }
         for (State::ConstArcIter arc_iter = this_state.arcs_begin();
              arc_iter != this_state.arcs_end(); arc_iter++) {
           int this_ilabel = arc_iter->first;
@@ -380,7 +399,6 @@ int Graph::eliminate_eps_arc(Graph *fa) {
             const std::vector<Arc> &this_arcs = arc_iter->second;
             for (std::vector<Arc>::const_iterator insert_arc_iter = this_arcs.begin();
                  insert_arc_iter != this_arcs.end(); insert_arc_iter++) {
-              std::cout << "add" << this_valid_state << "\n";
               new_fa.add_arc(this_valid_state, *insert_arc_iter);
             }
           }
@@ -440,6 +458,10 @@ int Graph::convert_nfa_to_dfa(const Graph &nfa, Graph *dfa, std::map<int, std::s
   dfa_start.gen_key();
   dfa_start.state_id = dfa->add_state();
   dfa->set_start(dfa_start.state_id);
+  if (nfa.is_final(nfa.get_start())) {
+    dfa_start.is_final = true;
+    dfa->set_final(dfa_start.state_id);
+  }
   que.push(dfa_start);
   dfa_states[dfa_start.key] = dfa_start;
 
