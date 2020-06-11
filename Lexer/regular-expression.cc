@@ -229,10 +229,13 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
       for (int i = 0; i < or_indices.size(); i++) {
         Graph this_nfa;
         int ret = convert_regular_expression_to_NFA(preprocessed_regex, this_start_idx, or_indices[i], &this_nfa);
+        std::cout << " alter nfa " << i << "\n" << this_nfa.to_str();
         this_start_idx = or_indices[i] + 1;
         nfa_vec.push_back(this_nfa);
       }
+      std::cout << " before fa_alter nfa_left \n" << nfa_left.to_str();
       Graph::fa_alternative(nfa_vec, &nfa_left);
+      std::cout << " after fa_alter nfa_left \n" << nfa_left.to_str();
     } else if (SET == rule_pattern) {
       std::set<int> char_set;
       get_char_set(preprocessed_regex, start_idx, sub_end_idx + 1, &char_set);

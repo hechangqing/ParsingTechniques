@@ -282,13 +282,8 @@ int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, const std::vec
            iter != this_fa.states_.end(); iter++) {
         int this_state_id = iter->first;
         int new_state_id = this_state_id + cur_max_state_id + 1;
-        fa->add_state();
         if (this_fa.get_start() == this_state_id) {
           fa->add_arc(start_state_id, Arc(Arc::EPSILON, new_state_id));
-        }
-        if (this_fa.is_final(this_state_id)) {
-          orig_final_state_ids.push_back(new_state_id);
-          (*fa_state_to_rule_id)[new_state_id] = rule_ids[i];
         }
         const State &this_state = iter->second;
         for (State::ConstArcIter arc_iter = this_state.arcs_begin();
@@ -298,11 +293,14 @@ int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, const std::vec
           for (int a = 0; a < this_ilabel_arcs.size(); a++) {
             int new_next_state = this_ilabel_arcs[a].next_state + cur_max_state_id + 1;
             fa->add_arc(new_state_id, Arc(ilabel, new_next_state));
-            if (this_fa.is_final(this_ilabel_arcs[a].next_state)) {
-              (*fa_state_to_rule_id)[new_next_state] = rule_ids[i];
-            }
           }
         }
+      }
+      for (std::set<int>::const_iterator iter = this_fa.final_states_.begin();
+           iter != this_fa.final_states_.end(); iter++) {
+        int new_final_state_id = *iter + cur_max_state_id + 1;
+        orig_final_state_ids.push_back(new_final_state_id);
+        (*fa_state_to_rule_id)[new_final_state_id] = rule_ids[i];
       }
     }
     for (int i = 0; i < orig_final_state_ids.size(); i++) {

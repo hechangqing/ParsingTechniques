@@ -131,7 +131,277 @@ void unit_test_regular_expression() {
 
     assert(regex.accept("ab") == true);
   }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[ab]";
+    regex.compile(regex_str);
 
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[a-zA-Z]";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("[a-z]") == false);
+    assert(regex.accept("[a-zA-Z]") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("z") == true);
+    assert(regex.accept("A") == true);
+    assert(regex.accept("B") == true);
+    assert(regex.accept("C") == true);
+    assert(regex.accept("Z") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[a-zA-Z_]";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("[a-z]") == false);
+    assert(regex.accept("[a-zA-Z]") == false);
+    assert(regex.accept("[a-zA-Z_]") == false);
+    assert(regex.accept("_ ") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("z") == true);
+    assert(regex.accept("A") == true);
+    assert(regex.accept("B") == true);
+    assert(regex.accept("C") == true);
+    assert(regex.accept("Z") == true);
+    assert(regex.accept("_") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[_a-zA-Z]";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("[a-z]") == false);
+    assert(regex.accept("[a-zA-Z]") == false);
+    assert(regex.accept("[a-zA-Z_]") == false);
+    assert(regex.accept("_ ") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("z") == true);
+    assert(regex.accept("A") == true);
+    assert(regex.accept("B") == true);
+    assert(regex.accept("C") == true);
+    assert(regex.accept("Z") == true);
+    assert(regex.accept("_") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[a-z_A-Z]";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("[a-z]") == false);
+    assert(regex.accept("[a-zA-Z]") == false);
+    assert(regex.accept("[a-zA-Z_]") == false);
+    assert(regex.accept("_ ") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("z") == true);
+    assert(regex.accept("A") == true);
+    assert(regex.accept("B") == true);
+    assert(regex.accept("C") == true);
+    assert(regex.accept("Z") == true);
+    assert(regex.accept("_") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(a|b)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("_ ") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(a|b|c)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("ab") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("_ ") == false);
+    assert(regex.accept("d") == false);
+
+    assert(regex.accept("a") == true);
+    assert(regex.accept("b") == true);
+    assert(regex.accept("c") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(ab|c|d)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept("abcd") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("_ ") == false);
+    assert(regex.accept("c ") == false);
+    assert(regex.accept("d ") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("b") == false);
+
+    assert(regex.accept("ab") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("d") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "((ab)|c|d)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept("abcd") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("_ ") == false);
+    assert(regex.accept("c ") == false);
+    assert(regex.accept("d ") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("b") == false);
+
+    assert(regex.accept("ab") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("d") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(((ab))|(c)|(d))";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("abc") == false);
+    assert(regex.accept("abcd") == false);
+    assert(regex.accept(" ab") == false);
+    assert(regex.accept("ab ") == false);
+    assert(regex.accept("ab c") == false);
+    assert(regex.accept(" ab ") == false);
+    assert(regex.accept(" a ") == false);
+    assert(regex.accept("a ") == false);
+    assert(regex.accept("b ") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept("a-") == false);
+    assert(regex.accept("_ ") == false);
+    assert(regex.accept("c ") == false);
+    assert(regex.accept("d ") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("b") == false);
+
+    assert(regex.accept("ab") == true);
+    assert(regex.accept("c") == true);
+    assert(regex.accept("d") == true);
+  }
 }
 
 void unit_test() {
@@ -211,7 +481,7 @@ void debug() {
 
   {
     RegularExpression regex;
-    std::string regex_str = "[ab]";
+    std::string regex_str = "(a|b)";
     Graph nfa;
     regex.convert_regular_expression_to_NFA(regex_str, &nfa);
     std::cout << "eps-nfa begin " << std::string(10, '-') << std::endl;
@@ -233,8 +503,8 @@ void debug() {
 }
 
 int main() {
-  //unit_test_regular_expression();
+  unit_test_regular_expression();
   //unit_test();
-  debug();
+  //debug();
   return 0;
 }
