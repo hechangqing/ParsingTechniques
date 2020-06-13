@@ -221,7 +221,7 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
     } else if (NESTING == rule_pattern) {
       //std::cout << "nesting " << start_idx + 1 << " " << sub_end_idx << "\n";
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx + 1, sub_end_idx, &nfa_left);
-      std::cout << " this \n" << nfa_left.to_str();
+      //std::cout << " this \n" << nfa_left.to_str();
     } else if (ALTERNATIVE == rule_pattern) {
       std::vector<Graph> nfa_vec;
       or_indices.push_back(sub_end_idx);
@@ -229,13 +229,13 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
       for (int i = 0; i < or_indices.size(); i++) {
         Graph this_nfa;
         int ret = convert_regular_expression_to_NFA(preprocessed_regex, this_start_idx, or_indices[i], &this_nfa);
-        std::cout << " alter nfa " << i << "\n" << this_nfa.to_str();
+        //std::cout << " alter nfa " << i << "\n" << this_nfa.to_str();
         this_start_idx = or_indices[i] + 1;
         nfa_vec.push_back(this_nfa);
       }
-      std::cout << " before fa_alter nfa_left \n" << nfa_left.to_str();
+      //std::cout << " before fa_alter nfa_left \n" << nfa_left.to_str();
       Graph::fa_alternative(nfa_vec, &nfa_left);
-      std::cout << " after fa_alter nfa_left \n" << nfa_left.to_str();
+      //std::cout << " after fa_alter nfa_left \n" << nfa_left.to_str();
     } else if (SET == rule_pattern) {
       std::set<int> char_set;
       get_char_set(preprocessed_regex, start_idx, sub_end_idx + 1, &char_set);
@@ -243,15 +243,15 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::vector<int> 
     } else if (CONCATENATION == rule_pattern) {
       assert(sub_end_idx == start_idx);
       int ret = convert_regular_expression_to_NFA(preprocessed_regex, start_idx, start_idx + 1, &nfa_left);
-      std::cout << " concat \n" << nfa_left.to_str();
+      //std::cout << " concat \n" << nfa_left.to_str();
     } else {
       assert(0);
     }
     Graph nfa_right;
     int ret = convert_regular_expression_to_NFA(preprocessed_regex, sub_end_idx + 1, end_idx, &nfa_right);
-    std::cout << " concat right \n" << nfa_right.to_str();
+    //std::cout << " concat right \n" << nfa_right.to_str();
     Graph::concate_fa(nfa_left, nfa_right, nfa);
-    std::cout << " concat result \n" << nfa->to_str();
+    //std::cout << " concat result \n" << nfa->to_str();
   }
   return 0;
 }
@@ -277,11 +277,11 @@ int RegularExpression::convert_regular_expression_to_NFA(const std::string &regu
 int RegularExpression::convert_regular_expression_to_DFA(const std::string &regular_expression, Graph *dfa) {
   Graph nfa;
   int ret = convert_regular_expression_to_NFA(regular_expression, &nfa);
-  std::cout << "eps-nfa\n" << nfa.to_str();
+  //std::cout << "eps-nfa\n" << nfa.to_str();
   Graph::eliminate_eps_arc(&nfa);
-  std::cout << "nfa\n" << nfa.to_str();
+  //std::cout << "nfa\n" << nfa.to_str();
   Graph::convert_nfa_to_dfa(nfa, dfa);
-  std::cout << "dfa\n" << dfa->to_str();
+  //std::cout << "dfa\n" << dfa->to_str();
   return ret;
 }
 

@@ -215,7 +215,6 @@ int Graph::concate_fa(const Graph &left, const Graph &right, Graph *fa) {
   }
   *fa = left;
   int left_max_state_id = left.max_state_id();
-  std::cout << "left_max_state_id " << left_max_state_id << std::endl;
 
   int new_right_start_state_id = right.get_start() + left_max_state_id + 1;
   for (std::map<int, State>::const_iterator iter = right.states_.begin();
@@ -268,6 +267,10 @@ int Graph::fa_alternative(const std::vector<Graph> &fa_graph_vec, const std::vec
   if (fa_graph_vec.size() == 0) {
   } else if (fa_graph_vec.size() == 1) {
     *fa = fa_graph_vec[0];
+    for (std::set<int>::const_iterator iter = fa->final_states_.begin();
+         iter != fa->final_states_.end(); iter++) {
+      (*fa_state_to_rule_id)[*iter] = rule_ids[0];
+    }
   } else {
     int start_state_id = fa->add_state();
     fa->set_start(start_state_id);
