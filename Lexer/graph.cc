@@ -197,10 +197,29 @@ int Graph::fa_proper_sequence(Graph *fa) {
 }
 
 int Graph::fa_optinal(Graph *fa) {
+  int old_start_state = fa->get_start();
+
+  int new_start_state = fa->add_state();
+  fa->set_start(new_start_state);
+
+  fa->add_arc(new_start_state, Arc(Arc::EPSILON, old_start_state));
+
+  int new_final_state = fa->add_state();
+
+  fa->add_arc(new_start_state, Arc(Arc::EPSILON, new_final_state));
+
+  std::set<int> old_final_states;
   for (Graph::FinalStatesIterator iter = fa->final_states_begin();
        iter != fa->final_states_end(); ++iter) {
-    fa->add_arc(fa->get_start(), Arc(Arc::EPSILON, *iter));
+    fa->add_arc(*iter, Arc(Arc::EPSILON, new_final_state));
+    old_final_states.insert(*iter);
   }
+
+  for (std::set<int>::iterator iter = old_final_states.begin();
+       iter != old_final_states.end(); iter++) {
+    fa->remove_final(*iter);
+  }
+  fa->set_final(new_final_state);
   return 0;
 }
 

@@ -23,7 +23,7 @@ private:
     SET              // [abc...]...
   };
   enum ControlSymbol {
-    CTRL_OR = 0x10000,
+    CTRL_OR = 0x10001,
     CTRL_STAR,
     CTRL_ADD,
     CTRL_OPTINAL,

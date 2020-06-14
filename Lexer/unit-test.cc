@@ -753,86 +753,325 @@ void unit_test_regular_expression() {
   }
   {
     RegularExpression regex;
-    //std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
-    std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
+    std::string regex_str = "e(\\+|\\-)?[0-9]+";
     regex.compile(regex_str);
 
-    //assert(regex.accept("0") == false);
-    //assert(regex.accept(".") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept(".") == false);
+    assert(regex.accept("") == false);
+    assert(regex.accept("e") == false);
+    assert(regex.accept("e+") == false);
+    assert(regex.accept("e-") == false);
 
-    //assert(regex.accept("e2") == true);
-    //assert(regex.accept("5e-2") == true);
-    //assert(regex.accept("5e+2") == true);
+    assert(regex.accept("e+1") == true);
+    assert(regex.accept("e-1") == true);
+    assert(regex.accept("e1") == true);
   }
   {
     RegularExpression regex;
-    std::string regex_str = "([0-9]+.[0-9]*|.[0-9]+)(e(+|-)?[0-9]+)?";
+    std::string regex_str = "(e(\\+|\\-)?)?";
+    regex.compile(regex_str);
+
+    assert(regex.accept("0") == false);
+    assert(regex.accept(".") == false);
+
+    assert(regex.accept("") == true);
+    assert(regex.accept("e") == true);
+    assert(regex.accept("e+") == true);
+    assert(regex.accept("e-") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
+    regex.compile(regex_str);
+
+    assert(regex.accept("0") == false);
+    assert(regex.accept(".") == false);
+
+    assert(regex.accept("") == true);
+    assert(regex.accept("e0") == true);
+    assert(regex.accept("e+1") == true);
+    assert(regex.accept("e-2") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "([0-9]+.[0-9]*|.[0-9]+|[0-9]+)(e(\\+|\\-)?[0-9]+)?";
     regex.compile(regex_str);
 
     assert(regex.accept("") == false);
-    assert(regex.accept("0") == false);
     assert(regex.accept(".") == false);
 
     assert(regex.accept("4.7") == true);
     assert(regex.accept("4.") == true);
+    assert(regex.accept("4") == true);
     assert(regex.accept(".7") == true);
     assert(regex.accept("0.7") == true);
     assert(regex.accept("10.3") == true);
+    assert(regex.accept("12345") == true);
     assert(regex.accept("3.1415926") == true);
-    //assert(regex.accept("5e2") == true);
-    //assert(regex.accept("5e-2") == true);
-    //assert(regex.accept("5e+2") == true);
+    assert(regex.accept("5e2") == true);
+    assert(regex.accept("5e-2") == true);
+    assert(regex.accept("5e+2") == true);
+    assert(regex.accept("10.e3") == true);
+    assert(regex.accept(".103e-6") == true);
+    assert(regex.accept("1024.3e6") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "\"([^\"]|\\\\\")*\"";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+
+    assert(regex.accept("\"\"") == true);
+    assert(regex.accept("\"tutti frutti ice cream\"") == true);
+    assert(regex.accept("\"\\\"hello, world!\\\"\"") == true);
+    assert(regex.accept("\"Today's special is a pastrami sandwich on rye bread with \\\na potato knish and a cherry soda.\"") == true);
+    assert(regex.accept("\"potato\\nknish\"") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(=|\\+=|\\-=|\\*=|/=|%=|<<=|>>=|&=|\\^=|\\|=)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("*") == false);
+    assert(regex.accept("/") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept("*") == false);
+    assert(regex.accept(">>") == false);
+    assert(regex.accept("<<") == false);
+    assert(regex.accept("%") == false);
+    assert(regex.accept("+") == false);
+    assert(regex.accept("-") == false);
+
+    assert(regex.accept("=") == true);
+    assert(regex.accept("+=") == true);
+    assert(regex.accept("-=") == true);
+    assert(regex.accept("*=") == true);
+    assert(regex.accept("/=") == true);
+    assert(regex.accept("%=") == true);
+    assert(regex.accept("<<=") == true);
+    assert(regex.accept(">>=") == true);
+    assert(regex.accept("&=") == true);
+    assert(regex.accept("^=") == true);
+    assert(regex.accept("|=") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(\\+\\+|\\-\\-)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("*") == false);
+    assert(regex.accept("/") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept("*") == false);
+    assert(regex.accept(">>") == false);
+    assert(regex.accept("<<") == false);
+    assert(regex.accept("%") == false);
+    assert(regex.accept("+") == false);
+    assert(regex.accept("-") == false);
+    assert(regex.accept("+-") == false);
+
+    assert(regex.accept("++") == true);
+    assert(regex.accept("--") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(\\+|\\-|\\*|/|%)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("++") == false);
+    assert(regex.accept("--") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept(">>") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("<<") == false);
+
+    assert(regex.accept("/") == true);
+    assert(regex.accept("*") == true);
+    assert(regex.accept("%") == true);
+    assert(regex.accept("+") == true);
+    assert(regex.accept("-") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(\\+|\\-|\\*|/|%)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("++") == false);
+    assert(regex.accept("--") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept(">>") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("<<") == false);
+
+    assert(regex.accept("/") == true);
+    assert(regex.accept("*") == true);
+    assert(regex.accept("%") == true);
+    assert(regex.accept("+") == true);
+    assert(regex.accept("-") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(==|!=|<|>|<=|>=)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("++") == false);
+    assert(regex.accept("--") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept(">>") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("<<") == false);
+
+    assert(regex.accept("==") == true);
+    assert(regex.accept("!=") == true);
+    assert(regex.accept("<") == true);
+    assert(regex.accept(">") == true);
+    assert(regex.accept("<=") == true);
+    assert(regex.accept(">=") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(&&|(\\|\\|)|!)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("++") == false);
+    assert(regex.accept("--") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept(">>") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("<<") == false);
+    assert(regex.accept("!!") == false);
+
+    assert(regex.accept("&&") == true);
+    assert(regex.accept("||") == true);
+    assert(regex.accept("!") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(<<|>>)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("<") == false);
+    assert(regex.accept(">") == false);
+    assert(regex.accept("|") == false);
+    assert(regex.accept("&") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("!!") == false);
+
+    assert(regex.accept("<<") == true);
+    assert(regex.accept(">>") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(&|(\\|)|(\\^)|~)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("<") == false);
+    assert(regex.accept(">") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("!!") == false);
+
+    assert(regex.accept("&") == true);
+    assert(regex.accept("|") == true);
+    assert(regex.accept("^") == true);
+    assert(regex.accept("~") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = ",";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("<") == false);
+    assert(regex.accept(">") == false);
+    assert(regex.accept("+-") == false);
+    assert(regex.accept("!!") == false);
+
+    assert(regex.accept(",") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(.|(\\->))";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("<") == false);
+    assert(regex.accept(">") == false);
+    assert(regex.accept("-") == false);
+    assert(regex.accept("!") == false);
+
+    assert(regex.accept(".") == true);
+    assert(regex.accept("->") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(\\?|:)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("<") == false);
+    assert(regex.accept(">") == false);
+    assert(regex.accept("-") == false);
+    assert(regex.accept("!") == false);
+
+    assert(regex.accept("?") == true);
+    assert(regex.accept(":") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "(\\(|\\)|\\[|\\]|{|}|;|,|.|:)";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("<") == false);
+    assert(regex.accept(">") == false);
+    assert(regex.accept("-") == false);
+    assert(regex.accept("!") == false);
+
+    assert(regex.accept("(") == true);
+    assert(regex.accept(")") == true);
+    assert(regex.accept("[") == true);
+    assert(regex.accept("]") == true);
+    assert(regex.accept("{") == true);
+    assert(regex.accept("}") == true);
+    assert(regex.accept(";") == true);
+    assert(regex.accept(",") == true);
+    assert(regex.accept(".") == true);
+    assert(regex.accept(":") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[ \t\n\v\f]+";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("(") == false);
+
+    assert(regex.accept(" ") == true);
+    assert(regex.accept("\n") == true);
+    assert(regex.accept("\t") == true);
+    assert(regex.accept("\v") == true);
+    assert(regex.accept("\f") == true);
+    assert(regex.accept("\n\f\v\t") == true);
   }
 }
 
 void unit_test() {
-  //{
-  //  RegularExpression regex;
-  //  Graph nfa;
-  //  //std::string str = "((\\(ab)|c|d)\\*";
-  //  std::string str = "a\\+";
-  //  std::cout << str << std::endl;
-  //  std::cout << str.size() << std::endl;
-  //  regex.convert_regular_expression_to_NFA(str, &nfa);
-  //}
-  //{
-  //  Lexer lexer;
-  //  std::string text = "3.12345 auto ABC ";
-  //  std::vector<std::string> regex_rules;
-  //  std::vector<int> rule_ids;
-  //  regex_rules.push_back("[a-zA-Z][a-zA-Z_0-9]*");
-  //  rule_ids.push_back(1);
-  //  regex_rules.push_back("[0-9]+");
-  //  rule_ids.push_back(2);
-  //  regex_rules.push_back("[0-9]+.[0-9]+");
-  //  rule_ids.push_back(3);
-  //  regex_rules.push_back("[=>]");
-  //  rule_ids.push_back(4);
-  //  regex_rules.push_back("auto");
-  //  rule_ids.push_back(5);
-  //  lexer.compile(regex_rules, rule_ids);
-
-  //  int start_pos = 0;
-
-  //  while (start_pos < text.size() ) {
-  //    std::vector<int> ret_rules;
-  //    int end_pos = 0;
-  //    int ret = lexer.next_token(text, start_pos, &ret_rules, &end_pos);
-  //    if (ret == 0) { // accept
-  //      std::cout << "(Token ";
-  //      for (std::vector<int>::iterator iter = ret_rules.begin();
-  //           iter != ret_rules.end(); iter++) {
-  //        std::cout << *iter << " ";
-  //      }
-  //      std::cout << ", \"" << text.substr(start_pos, end_pos - start_pos);
-  //      std::cout << "\")\n";
-  //      start_pos = end_pos;
-  //    } else { // not accept
-  //      std::cout << "(Unknown, \"" << text[start_pos] << "\")\n";
-  //      start_pos += 1;
-  //    }
-  //  }
-  //}
   {
     Lexer lexer;
     std::string text = "3.12345 auto ABC ";
@@ -876,51 +1115,12 @@ void unit_test() {
 }
 
 void debug() {
-  //{
-  //  RegularExpression regex;
-  //  std::string regex_str = "a";
-  //  Graph a;
-  //  regex.convert_regular_expression_to_NFA(regex_str, &a);
-  //  std::cout << "begin " << std::string(10, '-') << std::endl;
-  //  std::cout << a.to_str();
-  //  std::cout << "end " << std::string(10, '-') << std::endl;
-
-  //  Graph b;
-  //  regex.convert_regular_expression_to_NFA("b", &b);
-  //  std::cout << "begin " << std::string(10, '-') << std::endl;
-  //  std::cout << b.to_str();
-  //  std::cout << "end " << std::string(10, '-') << std::endl;
-
-  //  Graph c;
-  //  Graph::concate_fa(a, b, &c);
-  //  std::cout << c.to_str();
-  //}
-
-  //{
-  //  RegularExpression regex;
-  //  std::string regex_str = "ab";
-  //  Graph nfa;
-  //  regex.convert_regular_expression_to_NFA(regex_str, &nfa);
-  //  std::cout << "eps-nfa begin " << std::string(10, '-') << std::endl;
-  //  std::cout << nfa.to_str();
-  //  std::cout << "eps-nfa end " << std::string(10, '-') << std::endl;
-
-  //  Graph::eliminate_eps_arc(&nfa);
-
-  //  std::cout << "nfa begin " << std::string(10, '-') << std::endl;
-  //  std::cout << nfa.to_str();
-  //  std::cout << "nfa end " << std::string(10, '-') << std::endl;
-
-  //  Graph dfa;
-  //  Graph::convert_nfa_to_dfa(nfa, &dfa);
-  //  std::cout << "dfa begin " << std::string(10, '-') << std::endl;
-  //  std::cout << dfa.to_str();
-  //  std::cout << "dfa end " << std::string(10, '-') << std::endl;
-  //}
-
   {
     RegularExpression regex;
-    std::string regex_str = "[ ]";
+    //std::string regex_str = "[ ]";
+    //std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
+    //std::string regex_str = "\"([^\"]|\\\\\")*\"";
+    std::string regex_str = "\"([abc]|\\\\\")*\"";
     Graph nfa;
     regex.convert_regular_expression_to_NFA(regex_str, &nfa);
     std::cout << "eps-nfa begin " << std::string(10, '-') << std::endl;

@@ -200,7 +200,7 @@ int RegularExpression::get_char_set(const std::vector<int> &preprocessed_regex, 
   }
   if (exclude) {
     std::set<int> tmp_set;
-    for (int i = 32; i < 127; i++) {
+    for (int i = 0; i <= 127; i++) {
       if (char_set->find(i) == char_set->end()) {
         tmp_set.insert(i);
       }

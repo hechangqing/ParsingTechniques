@@ -9,7 +9,7 @@
 class Arc {
 public:
   enum IlabelValue {
-    EPSILON = 0
+    EPSILON = 0x10000
   };
   Arc() {}
   Arc(int new_ilabel, int new_next_state) :
