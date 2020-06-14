@@ -31,7 +31,8 @@ private:
     CTRL_RIGHT_PARENTHESIS,
     CTRL_LEFT_BRACKETS,
     CTRL_RIGHT_BRACKETS,
-    CTRL_RANGE
+    CTRL_RANGE,
+    CTRL_EXCLUDE
   };
 public:
   static int convert_regular_expression_to_NFA(const std::string &regular_expression,

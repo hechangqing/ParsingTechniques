@@ -666,7 +666,123 @@ void unit_test_regular_expression() {
     assert(regex.accept("\'P\'") == true);
     assert(regex.accept("\'Z\'") == true);
   }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[^a]";
+    regex.compile(regex_str);
 
+    assert(regex.accept("") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("aa") == false);
+
+    assert(regex.accept(" ") == true);
+    assert(regex.accept("b") == true);
+    assert(regex.accept("A") == true);
+    assert(regex.accept("z") == true);
+    assert(regex.accept("0") == true);
+    assert(regex.accept("+") == true);
+    assert(regex.accept("\\") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "[^a-zA-Z]";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("a") == false);
+    assert(regex.accept("aa") == false);
+    assert(regex.accept("b") == false);
+    assert(regex.accept("A") == false);
+    assert(regex.accept("z") == false);
+
+    assert(regex.accept(" ") == true);
+    assert(regex.accept("0") == true);
+    assert(regex.accept("-") == true);
+    assert(regex.accept("-") == true);
+    assert(regex.accept("@") == true);
+    assert(regex.accept("\\") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "'([^'\\\\]|\\\\\\\\|\\\\\\?|\\\\'|\\\\\"|(\\\\[abefnrtv])|\\\\([0-7]|[0-7][0-7]|[0-7][0-7][0-7])|\\\\x[0-9a-fA-F]+)'";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("''") == false);
+    assert(regex.accept("'''") == false);
+    assert(regex.accept("'\'") == false);
+    assert(regex.accept("'\\'") == false);
+    assert(regex.accept("'\\8'") == false);
+    assert(regex.accept("'\\88'") == false);
+    assert(regex.accept("'\\888'") == false);
+    assert(regex.accept("'\\008'") == false);
+    assert(regex.accept("'\\x'") == false);
+    assert(regex.accept("'\\xG'") == false);
+    assert(regex.accept("'\\x0X'") == false);
+
+    assert(regex.accept("'\\\\'") == true);
+    assert(regex.accept("'\\?'") == true);
+    assert(regex.accept("'\\''") == true);
+    assert(regex.accept("'\\\"'") == true);
+    assert(regex.accept("'\\a'") == true);
+    assert(regex.accept("'\\b'") == true);
+    assert(regex.accept("'\\e'") == true);
+    assert(regex.accept("'\\f'") == true);
+    assert(regex.accept("'\\0'") == true);
+    assert(regex.accept("'\\1'") == true);
+    assert(regex.accept("'\\7'") == true);
+    assert(regex.accept("'\\00'") == true);
+    assert(regex.accept("'\\11'") == true);
+    assert(regex.accept("'\\35'") == true);
+    assert(regex.accept("'\\77'") == true);
+    assert(regex.accept("'\\000'") == true);
+    assert(regex.accept("'\\101'") == true);
+    assert(regex.accept("'\\571'") == true);
+    assert(regex.accept("'\\777'") == true);
+    assert(regex.accept("'\\x0'") == true);
+    assert(regex.accept("'\\x2'") == true);
+    assert(regex.accept("'\\x9'") == true);
+    assert(regex.accept("'\\xa'") == true);
+    assert(regex.accept("'\\xe'") == true);
+    assert(regex.accept("'\\xf'") == true);
+    assert(regex.accept("'\\xA'") == true);
+    assert(regex.accept("'\\xC'") == true);
+    assert(regex.accept("'\\xF'") == true);
+    assert(regex.accept("'\\x0acBFD'") == true);
+    assert(regex.accept("'\\xAde9CD0F'") == true);
+  }
+  {
+    RegularExpression regex;
+    //std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
+    std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
+    regex.compile(regex_str);
+
+    //assert(regex.accept("0") == false);
+    //assert(regex.accept(".") == false);
+
+    //assert(regex.accept("e2") == true);
+    //assert(regex.accept("5e-2") == true);
+    //assert(regex.accept("5e+2") == true);
+  }
+  {
+    RegularExpression regex;
+    std::string regex_str = "([0-9]+.[0-9]*|.[0-9]+)(e(+|-)?[0-9]+)?";
+    regex.compile(regex_str);
+
+    assert(regex.accept("") == false);
+    assert(regex.accept("0") == false);
+    assert(regex.accept(".") == false);
+
+    assert(regex.accept("4.7") == true);
+    assert(regex.accept("4.") == true);
+    assert(regex.accept(".7") == true);
+    assert(regex.accept("0.7") == true);
+    assert(regex.accept("10.3") == true);
+    assert(regex.accept("3.1415926") == true);
+    //assert(regex.accept("5e2") == true);
+    //assert(regex.accept("5e-2") == true);
+    //assert(regex.accept("5e+2") == true);
+  }
 }
 
 void unit_test() {

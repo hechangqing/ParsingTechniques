@@ -13,7 +13,7 @@ int RegularExpression::preprocess_regular_expression(const std::string &regular_
     int this_char = regular_expression[i];
     if (this_char == '\\' && i+1 < regular_expression.size()) {
       int next_char = regular_expression[i+1];
-      if (next_char == '|' || next_char == '*' || next_char == '+' || next_char == '?' || next_char == '(' || next_char == ')' || next_char == '[' || next_char == ']' || next_char == '-') {
+      if (next_char == '|' || next_char == '*' || next_char == '+' || next_char == '?' || next_char == '(' || next_char == ')' || next_char == '[' || next_char == ']' || next_char == '-' || next_char == '^' || next_char == '\\') {
         processed->push_back(next_char);
       } else {
         processed->push_back(this_char);
@@ -39,6 +39,8 @@ int RegularExpression::preprocess_regular_expression(const std::string &regular_
         processed->push_back(CTRL_RIGHT_BRACKETS);
       } else if (this_char == '-') {
         processed->push_back(CTRL_RANGE);
+      } else if (this_char == '^') {
+        processed->push_back(CTRL_EXCLUDE);
       } else {
         processed->push_back(this_char);
       }
@@ -165,6 +167,14 @@ int RegularExpression::get_char_set(const std::vector<int> &preprocessed_regex, 
   assert(preprocessed_regex[start_idx] == CTRL_LEFT_BRACKETS);
   assert(preprocessed_regex[end_idx - 1] == CTRL_RIGHT_BRACKETS);
   int i = start_idx + 1;
+  bool exclude = false;
+  if (i < end_idx - 1) {
+    int this_char = preprocessed_regex[i];
+    if (this_char == CTRL_EXCLUDE) {
+      exclude = true;
+      i += 1;
+    }
+  }
   while (i < end_idx - 1) {
     int this_char = preprocessed_regex[i];
     if (i + 1 < end_idx - 1 && preprocessed_regex[i+1] == CTRL_RANGE) {
@@ -187,6 +197,15 @@ int RegularExpression::get_char_set(const std::vector<int> &preprocessed_regex, 
       char_set->insert(this_char);
       i += 1;
     }
+  }
+  if (exclude) {
+    std::set<int> tmp_set;
+    for (int i = 32; i < 127; i++) {
+      if (char_set->find(i) == char_set->end()) {
+        tmp_set.insert(i);
+      }
+    }
+    *char_set = tmp_set;
   }
   return 0;
 }
