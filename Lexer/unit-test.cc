@@ -4,6 +4,7 @@
 
 #include "regular-expression.h"
 #include "lexer.h"
+#include "c-lexer.h"
 
 void unit_test_regular_expression() {
   {
@@ -1072,51 +1073,11 @@ void unit_test_regular_expression() {
   }
 }
 
-void unit_test(int argc, char **argv) {
+void run_clexer(int argc, char **argv) {
   if (argc != 2) {
     return;
   }
-  //{
-  //  Lexer lexer;
-  //  std::string text = "3.12345 auto ABC ";
-  //  std::vector<std::string> regex_rules;
-  //  std::vector<int> rule_ids;
-  //  regex_rules.push_back("[a-zA-Z][a-zA-Z_0-9]*");
-  //  rule_ids.push_back(1);
-  //  regex_rules.push_back("[0-9]+");
-  //  rule_ids.push_back(2);
-  //  regex_rules.push_back("[0-9]+.[0-9]+");
-  //  rule_ids.push_back(3);
-  //  regex_rules.push_back("[=>]");
-  //  rule_ids.push_back(4);
-  //  regex_rules.push_back("auto");
-  //  rule_ids.push_back(5);
-  //  regex_rules.push_back("[ ]");
-  //  rule_ids.push_back(6);
-  //  lexer.compile(regex_rules, rule_ids);
 
-  //  int start_pos = 0;
-
-  //  while (start_pos < text.size() ) {
-  //    std::vector<int> ret_rules;
-  //    int end_pos = 0;
-  //    int ret = lexer.next_token(text, start_pos, &ret_rules, &end_pos);
-  //    if (ret == 0) { // accept
-  //      std::cout << "(Token ";
-  //      for (std::vector<int>::iterator iter = ret_rules.begin();
-  //           iter != ret_rules.end(); iter++) {
-  //        std::cout << *iter << " ";
-  //      }
-  //      std::cout << ", \"" << text.substr(start_pos, end_pos - start_pos);
-  //      std::cout << "\")\n";
-  //      start_pos = end_pos;
-  //    } else { // not accept
-  //      std::cout << "(Unknown, \"" << text[start_pos] << "\")\n";
-  //      start_pos += 1;
-  //    }
-  //  }
-  //}
-  //
   std::ifstream is(argv[1], std::ifstream::binary);
   is.seekg (0, is.end);
   int length = is.tellg();
@@ -1126,76 +1087,24 @@ void unit_test(int argc, char **argv) {
   text.resize(length);
 
   is.read((char*)text.data(), length);
-  {
-    Lexer lexer;
-    std::vector<std::string> regex_rules;
-    std::vector<int> rule_ids;
-    regex_rules.push_back("[_a-zA-Z][_a-zA-Z0-9]*");
-    rule_ids.push_back(1);
-    regex_rules.push_back("(0x|0X)[0-9a-fA-F]+((u|U)?(l|L)?|(l|L)?(u|U)?)");
-    rule_ids.push_back(2);
-    regex_rules.push_back("'([^'\\\\]|\\\\\\\\|\\\\\\?|\\\\'|\\\\\"|(\\\\[abefnrtv])|\\\\([0-7]|[0-7][0-7]|[0-7][0-7][0-7])|\\\\x[0-9a-fA-F]+)'");
-    rule_ids.push_back(3);
-    regex_rules.push_back("([0-9]+.[0-9]*|.[0-9]+|[0-9]+)(e(\\+|\\-)?[0-9]+)?");
-    rule_ids.push_back(4);
-    regex_rules.push_back("\"([^\"]|\\\\\")*\"");
-    rule_ids.push_back(5);
-    regex_rules.push_back("(=|\\+=|\\-=|\\*=|/=|%=|<<=|>>=|&=|\\^=|\\|=)");
-    rule_ids.push_back(6);
-    regex_rules.push_back("(\\+\\+|\\-\\-)");
-    rule_ids.push_back(7);
-    regex_rules.push_back("(\\+|\\-|\\*|/|%)");
-    rule_ids.push_back(8);
-    regex_rules.push_back("(==|!=|<|>|<=|>=)");
-    rule_ids.push_back(9);
-    regex_rules.push_back("(&&|(\\|\\|)|!)");
-    rule_ids.push_back(10);
-    regex_rules.push_back("(<<|>>)");
-    rule_ids.push_back(11);
-    regex_rules.push_back("(&|(\\|)|(\\^)|~)");
-    rule_ids.push_back(12);
-    regex_rules.push_back(",");
-    rule_ids.push_back(13);
-    regex_rules.push_back("(\\(|\\)|\\[|\\]|{|}|;|,|.|:)");
-    rule_ids.push_back(14);
-    regex_rules.push_back("(.|(\\->))");
-    rule_ids.push_back(15);
-    regex_rules.push_back("(\\?|:)");
-    rule_ids.push_back(16);
-    regex_rules.push_back("[ \t\n\v\f]+");
-    rule_ids.push_back(17);
-    lexer.compile(regex_rules, rule_ids);
 
-    int start_pos = 0;
-
-    while (start_pos < text.size() ) {
-      std::vector<int> ret_rules;
-      int end_pos = 0;
-      int ret = lexer.next_token(text, start_pos, &ret_rules, &end_pos);
-      if (ret == 0) { // accept
-        std::cout << "(Token ";
-        for (std::vector<int>::iterator iter = ret_rules.begin();
-             iter != ret_rules.end(); iter++) {
-          std::cout << *iter << " ";
-        }
-        std::cout << ", \"" << text.substr(start_pos, end_pos - start_pos);
-        std::cout << "\")\n";
-        start_pos = end_pos;
-      } else { // not accept
-        std::cout << "(Unknown, \"" << text[start_pos] << "\")\n";
-        start_pos += 1;
-      }
+  CLexer clexer;
+  clexer.init_input(text.data(), text.size());
+  Token tok;
+  while (clexer.next_token(&tok) == 0) {
+    if (tok.type != WHITE_SPACE) {
+      std::cout << "(" << tok.type << ", "
+                << lex_type_to_str(tok.type)
+                << ", \""
+                << text.substr(tok.start, tok.end - tok.start)
+                << "\")\n";
     }
   }
-
 }
 
 void debug() {
   {
     RegularExpression regex;
-    //std::string regex_str = "[ ]";
-    //std::string regex_str = "(e(\\+|\\-)?[0-9]+)?";
-    //std::string regex_str = "\"([^\"]|\\\\\")*\"";
     std::string regex_str = "\"([abc]|\\\\\")*\"";
     Graph nfa;
     regex.convert_regular_expression_to_NFA(regex_str, &nfa);
@@ -1219,7 +1128,7 @@ void debug() {
 
 int main(int argc, char **argv) {
   unit_test_regular_expression();
-  //unit_test(argc, argv);
+  //run_clexer(argc, argv);
   //debug();
   return 0;
 }

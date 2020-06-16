@@ -9,21 +9,27 @@ enum LexType {
   INTEGER_CONSTANT,
   CHARACTER_CONSTANT,
   REAL_NUMBER_CONSTANT,
-  STRING_CONTANT,
+  STRING_CONSTANT,
   OPERATOR,
   SEPARATOR,
-  WHITE_SPACE
+  WHITE_SPACE,
+  UNKNOWN
 };
 
-class Token {
-  LexType type,
-  int start,
-  int end
+const char *lex_type_to_str(int lex_type);
+
+struct Token {
+  int type;
+  int start;
+  int end;
 };
 
 class CLexer {
 public:
-  int init_input(const char *input_text, int text_size);
+  CLexer() : input_(NULL), start_pos_(0), text_len_(0) {
+    init();
+  }
+  int init_input(const char *input_text, int text_len);
   int next_token(Token *tok);
 private:
   int init();

@@ -44,11 +44,15 @@ int Lexer::compile(const std::vector<std::string> &regex_rules, const std::vecto
 }
 
 int Lexer::next_token(const std::string &text, int start_pos, std::vector<int> *rule_id, int *end_pos) {
+  return next_token(text.data(), start_pos, text.size(), rule_id, end_pos);
+}
+
+int Lexer::next_token(const char *text, int start_pos, int text_len, std::vector<int> *rule_id, int *end_pos) {
   assert(start_pos >= 0);
   int cur_state = dfa_.get_start();
   std::vector<int> final_state_ids_through;
   int last_idx = start_pos;
-  while (start_pos < text.size()) {
+  while (start_pos < text_len) {
     int this_char = text[start_pos];
     if (dfa_.state_has_arcs(cur_state)) {
       const State &state = dfa_.get_state(cur_state);

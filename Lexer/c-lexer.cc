@@ -1,8 +1,6 @@
 #include "c-lexer.h"
 
-CLexer::CLexer() :input_(NULL), start_pos_(0) {
-  init();
-}
+#include <cassert>
 
 int CLexer::init() {
   std::vector<std::string> regex_rules;
@@ -31,8 +29,7 @@ int CLexer::init() {
   rule_ids.push_back(OPERATOR);
   regex_rules.push_back("(&|(\\|)|(\\^)|~)");
   rule_ids.push_back(OPERATOR);
-  regex_rules.push_back(",");
-  rule_ids.push_back(); regex_rules.push_back("(\\(|\\)|\\[|\\]|{|}|;|,|.|:)");
+  regex_rules.push_back("(\\(|\\)|\\[|\\]|{|}|;|,|.|:)");
   rule_ids.push_back(SEPARATOR);
   regex_rules.push_back("(.|(\\->))");
   rule_ids.push_back(OPERATOR);
@@ -40,19 +37,70 @@ int CLexer::init() {
   rule_ids.push_back(SEPARATOR);
   regex_rules.push_back("[ \t\n\v\f]+");
   rule_ids.push_back(WHITE_SPACE);
-  lexer.compile(regex_rules, rule_ids);
+  lexer_.compile(regex_rules, rule_ids);
 
   return 0;
 }
 
-int CLexer::init_input(const char *input_text) {
+int CLexer::init_input(const char *input_text, int text_len) {
   input_ = input_text;
+  text_len_ = text_len;
+  start_pos_ = 0;
   return 0;
 }
 
 int CLexer::next_token(Token *tok) {
   assert(tok != NULL);
 
-  
-  return 0;
+  if (start_pos_ < text_len_) {
+    std::vector<int> ret_rules;
+    int end_pos = 0;
+    int ret = lexer_.next_token(input_, start_pos_, text_len_, &ret_rules, &end_pos);
+    if (ret == 0) { // accept
+      assert(ret_rules.size() >= 1);
+      tok->type = ret_rules[0];
+      tok->start = start_pos_;
+      tok->end = end_pos;
+      start_pos_ = end_pos;
+    } else { // not accept
+      tok->type = UNKNOWN;
+      tok->start = start_pos_;
+      tok->end = start_pos_ + 1;
+      start_pos_ += 1;
+    }
+    return 0;
+  } else {
+    return 1;
+  }
 }
+
+const char *lex_type_to_str(int lex_type) {
+  switch (lex_type) {
+    case IDENTIFIER:
+      return "ID";
+      break;
+    case INTEGER_CONSTANT:
+      return "INT";
+      break;
+    case CHARACTER_CONSTANT:
+      return "CHAR";
+      break;
+    case REAL_NUMBER_CONSTANT:
+      return "REAL";
+      break;
+    case STRING_CONSTANT:
+      return "STR";
+      break;
+    case OPERATOR:
+      return "OP";
+      break;
+    case SEPARATOR:
+      return "SEP";
+      break;
+    case WHITE_SPACE:
+      return "WHITE_SPACE";
+      break;
+  }
+  return "UNKNOWN";
+}
+
