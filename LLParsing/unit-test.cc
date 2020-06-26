@@ -8,6 +8,7 @@ void unit_test_LL1() {
       RuleRight right;
       right.push_back(parser.make_symbol("Facts", NON_TERMINAL));
       right.push_back(parser.make_symbol("Question", NON_TERMINAL));
+      parser.set_start(left);
       parser.add_rule(left, right);
     }
     {
