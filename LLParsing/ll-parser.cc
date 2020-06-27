@@ -29,6 +29,8 @@ int LLParser::set_start(const Symbol &start_symbol) {
 int LLParser::compile() {
   compute_first_set();
   compute_follow_set();
+  produce_parse_table();
+  print_parse_table();
   return 0;
 }
 
@@ -180,4 +182,66 @@ int LLParser::compute_follow_set() {
     print_follow_set();
   }
   return 0;
+}
+
+int LLParser::produce_parse_table() {
+  for (std::map<int, std::vector<RuleRight> >::iterator iter = id_to_rules_.begin(); iter != id_to_rules_.end(); iter++) {
+    int this_non_terminal_id = iter->first;
+    std::vector<RuleRight> &rule_right_vec = iter->second;
+    for (std::vector<RuleRight>::iterator rule_right_iter = rule_right_vec.begin(); rule_right_iter != rule_right_vec.end(); rule_right_iter++) {
+      RuleRight &rule_right = *rule_right_iter;
+      int rule_right_idx = rule_right_iter - rule_right_vec.begin();
+      std::set<int> first_set;
+      first(rule_right.begin(), rule_right.end(), &first_set);
+      for (std::set<int>::iterator set_iter = first_set.begin(); set_iter != first_set.end(); set_iter++) {
+        if (*set_iter != eps_id_) {
+          parse_table_[this_non_terminal_id][*set_iter].insert(rule_right_idx);
+        }
+      }
+      if (first_set.find(eps_id_) != first_set.end()) {
+        for (std::set<int>::iterator tmp_iter = id_to_follow_set_[this_non_terminal_id].begin(); tmp_iter != id_to_follow_set_[this_non_terminal_id].end(); tmp_iter++) {
+          parse_table_[this_non_terminal_id][*tmp_iter].insert(rule_right_idx);
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+void LLParser::print_parse_table() {
+  for (std::map<int, std::map<int, std::set<int> > >::iterator iter_table = parse_table_.begin(); iter_table != parse_table_.end(); iter_table++) {
+    int non_terminal_id = iter_table->first;
+    std::map<int, std::set<int> > &table_line = iter_table->second;
+    for (std::map<int, std::set<int> >::iterator iter_table_entry = table_line.begin(); iter_table_entry != table_line.end(); iter_table_entry++) {
+      int terminal_id = iter_table_entry->first;
+      std::set<int> &rule_right_ids = iter_table_entry->second;
+      for (std::set<int>::iterator tmp_iter = rule_right_ids.begin(); tmp_iter != rule_right_ids.end(); tmp_iter++) {
+        std::cout << "[ " << id_to_name(non_terminal_id) << ", " << id_to_name(terminal_id) << "] : "
+                  << rule_right_to_str(non_terminal_id, *tmp_iter)
+                  << "\n";
+      }
+    }
+  }
+}
+
+const std::string &LLParser::id_to_name(int id) const {
+  assert(id_to_name_.find(id) != id_to_name_.end());
+  return id_to_name_.at(id);
+}
+
+std::string LLParser::rule_right_to_str(int rule_non_terminal, int rule_right_idx) const {
+  const std::vector<RuleRight> &rule_right_vec = id_to_rules_.at(rule_non_terminal);
+  assert(rule_right_idx < rule_right_vec.size());
+  const RuleRight &rule_right = rule_right_vec.at(rule_right_idx);
+  std::string out;
+  for (RuleRight::const_iterator iter = rule_right.begin(); iter != rule_right.end(); iter++) {
+    if (iter->type == NON_TERMINAL) {
+      out += id_to_name(iter->id);
+    } else {
+      assert(iter->type == TERMINAL);
+      out += "\"" + id_to_name(iter->id) + "\"";
+    }
+    out += " ";
+  }
+  return out;
 }

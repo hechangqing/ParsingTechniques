@@ -39,8 +39,12 @@ public:
   int compute_first_set();
   int first(RuleRight::iterator beg, RuleRight::iterator end, std::set<int> *out_set);
   int compute_follow_set();
+  int produce_parse_table();
   void print_first_set();
   void print_follow_set();
+  void print_parse_table();
+  const std::string &id_to_name(int id) const;
+  std::string rule_right_to_str(int rule_non_terminal, int rule_right_idx) const;
 private:
   std::map<int, Symbol> id_to_left_;
   std::map<int, std::vector<RuleRight> > id_to_rules_;
@@ -50,6 +54,7 @@ private:
   int eps_id_;
   std::map<int, std::set<int> > id_to_first_set_;
   std::map<int, std::set<int> > id_to_follow_set_;
+  std::map<int, std::map<int, std::set<int> > > parse_table_;
   Symbol start_symbol_;
 };
 
