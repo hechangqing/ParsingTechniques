@@ -49,6 +49,49 @@ void unit_test_LL1() {
     }
     parser.compile();
   }
+  {
+    LLParser parser;
+    {
+      Symbol left = parser.make_symbol("S", NON_TERMINAL);
+      RuleRight right;
+      right.push_back(parser.make_symbol("E", NON_TERMINAL));
+      parser.set_start(left);
+      parser.add_rule(left, right);
+    }
+    {
+      Symbol left = parser.make_symbol("E", NON_TERMINAL);
+      RuleRight right;
+      right.push_back(parser.make_symbol("E", NON_TERMINAL));
+      right.push_back(parser.make_symbol("Q", NON_TERMINAL));
+      right.push_back(parser.make_symbol("F", NON_TERMINAL));
+      parser.add_rule(left, right);
+    }
+    {
+      Symbol left = parser.make_symbol("E", NON_TERMINAL);
+      RuleRight right;
+      right.push_back(parser.make_symbol("F", NON_TERMINAL));
+      parser.add_rule(left, right);
+    }
+    {
+      Symbol left = parser.make_symbol("F", NON_TERMINAL);
+      RuleRight right;
+      right.push_back(parser.make_symbol("a", TERMINAL));
+      parser.add_rule(left, right);
+    }
+    {
+      Symbol left = parser.make_symbol("Q", NON_TERMINAL);
+      RuleRight right;
+      right.push_back(parser.make_symbol("+", TERMINAL));
+      parser.add_rule(left, right);
+    }
+    {
+      Symbol left = parser.make_symbol("Q", NON_TERMINAL);
+      RuleRight right;
+      right.push_back(parser.make_symbol("-", TERMINAL));
+      parser.add_rule(left, right);
+    }
+    parser.compile();
+  }
 }
 
 int main() {
