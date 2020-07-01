@@ -1,4 +1,8 @@
 #include "ll-parser.h"
+#include "grammar-config.h"
+
+#include <iostream>
+#include <fstream>
 
 void unit_test_LL1() {
   {
@@ -94,7 +98,35 @@ void unit_test_LL1() {
   }
 }
 
+void unit_test_grammar_config() {
+  std::ifstream is("test_data/grammar.txt", std::ifstream::binary);
+  is.seekg (0, is.end);
+  int length = is.tellg();
+  is.seekg (0, is.beg);
+
+  std::string text;
+  text.resize(length);
+
+  is.read((char*)text.data(), length);
+
+  GrammarConfig config;
+  config.parse_config(text.data(), text.size());
+  //config.init_input(text.data(), text.size());
+  //Token tok;
+  //while (config.next_token(&tok) == 0) {
+  //  if (tok.type != WHITE_SPACE) {
+  //    std::cout << "(" << tok.type << ", "
+  //              << grammar_config_lex_type_to_str(tok.type)
+  //              << ", \""
+  //              << text.substr(tok.start, tok.end - tok.start)
+  //              << "\")\n";
+  //  }
+  //}
+
+}
+
 int main() {
   unit_test_LL1();
+  unit_test_grammar_config();
   return 0;
 }

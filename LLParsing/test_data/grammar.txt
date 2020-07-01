@@ -1,0 +1,28 @@
+lexical {
+  num = '[0-9]+'
+  ident = '[a-zA-Z_][a-zA-Z0-9_]+'
+  plus = '\+'
+  minus = '\-'
+  mul = '\*'
+  div = '/'
+  leftbrace = '\('
+  rightbrace = '\)'
+  comma = ','
+  discard = '[ \t\n]'
+}
+rule {
+  factor = num ;
+  factor = minus factor ;
+  factor = leftbrace exp rightbrace ;
+  factor = ident ;
+  factor = ident leftbrace param_list rightbrace ;
+  term = factor ;
+  term = factor mul term;
+  term = factor div term;
+  exp = term;
+  exp = term plus exp;
+  exp = term minus exp;
+  param_list = exp ;
+  param_list = exp comma  param_list;
+  program = exp;
+}
