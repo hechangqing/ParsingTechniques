@@ -2,6 +2,7 @@
 #define GRAMMAR_READER_H
 
 #include "../Lexer/lexer.h"
+#include "ll-parser.h"
 
 enum GrammarConfigLexType {
   KEYWORD_LEX,
@@ -13,14 +14,14 @@ enum GrammarConfigLexType {
   LEFT_CURLY_BRACKET,
   RIGHT_CURLY_BRACKET,
   WHITE_SPACE,
-  EOF,
+  EOF_TAG,
   UNKNOWN
 };
 
 const char *grammar_config_lex_type_to_str(int lex_type);
 
 struct Token {
-  Token() : type(EOF), start(0), end(0) {}
+  Token() : type(EOF_TAG), start(0), end(0) {}
   int type;
   int start;
   int end;
@@ -35,6 +36,7 @@ public:
   int init_input(const char *input_text, int text_len);
   int next_token(Token *tok);
 private:
+  int get_token_text(const Token &tok, std::string *str);
   int init();
   int match(int expect_type);
   int get_next();
@@ -52,6 +54,9 @@ private:
   int start_pos_;
   int text_len_;
   Token look_ahead_tok_;
+  Token cur_tok_;
+  std::map<std::string, int> name_to_symbol_type_; // non_terminal or terminal
+  std::vector<std::vector<std::string> > rules_;
 };
 
 #endif

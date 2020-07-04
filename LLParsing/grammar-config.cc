@@ -8,6 +8,15 @@ int GrammarConfig::parse_config(const char *config_text, int text_len) {
   init_input(config_text, text_len);
   get_next();
   parse_cfg();
+  for (int i = 0; i < rules_.size(); i++) {
+    for (int j = 0; j < rules_[i].size(); j++) {
+      std::cout << rules_[i][j] << " ";
+    }
+    std::cout << "\n";
+  }
+  for (std::map<std::string, int>::iterator iter = name_to_symbol_type_.begin(); iter != name_to_symbol_type_.end(); iter++) {
+    std::cout << iter->first << " " << (iter->second == NON_TERMINAL ? "non_terminal": "terminal") << "\n";
+  }
 }
 
 int GrammarConfig::init() {
@@ -64,9 +73,19 @@ int GrammarConfig::next_token(Token *tok) {
     }
     return 0;
   } else {
-    tok->type = EOF;
+    tok->type = EOF_TAG;
     tok->start = -1;
     tok->end = -1;
+    return 1;
+  }
+}
+
+int GrammarConfig::get_token_text(const Token &tok, std::string *str) {
+  assert(str != NULL);
+  if (tok.start >= 0 && tok.start < tok.end && tok.end <= text_len_) {
+    *str = std::string(input_ + tok.start, input_ + tok.end);
+    return 0;
+  } else {
     return 1;
   }
 }
@@ -100,7 +119,7 @@ const char *grammar_config_lex_type_to_str(int lex_type) {
     case WHITE_SPACE:
       return "WHITE_SPACE";
       break;
-    case EOF:
+    case EOF_TAG:
       return "EOF";
       break;
   }
@@ -108,60 +127,146 @@ const char *grammar_config_lex_type_to_str(int lex_type) {
 }
 
 int GrammarConfig::parse_cfg() {
-  parse_lexical();
-  parse_rule();
+  int ret = parse_lexical();
+  if (0 != ret) {
+    return ret;
+  }
+  ret = parse_rule();
+  if (0 != ret) {
+    return ret;
+  }
   return 0;
 }
 
 int GrammarConfig::parse_lexical() {
-  match(KEYWORD_LEX);
-  match(LEFT_CURLY_BRACKET);
-  parse_lex_entry_list();
-  match(RIGHT_CURLY_BRACKET);
+  int ret = match(KEYWORD_LEX);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(LEFT_CURLY_BRACKET);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = parse_lex_entry_list();
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(RIGHT_CURLY_BRACKET);
+  if (0 != ret) {
+    return ret;
+  }
   return 0;
 }
 
 int GrammarConfig::parse_lex_entry_list() {
   while (look_ahead() == IDENTIFIER) {
-    parse_lex_entry();
+    int ret = parse_lex_entry();
+    if (0 != ret) {
+      return ret;
+    }
   }
   return 0;
 }
 
 int GrammarConfig::parse_lex_entry() {
-  match(IDENTIFIER);
-  match(ASSIGN);
-  match(STRING);
+  int ret = match(IDENTIFIER);
+  if (0 != ret) {
+    return ret;
+  }
+  std::string lex_name;
+  assert(0 == get_token_text(cur_tok_, &lex_name));
+  if (name_to_symbol_type_.find(lex_name) == name_to_symbol_type_.end()) {
+    name_to_symbol_type_[lex_name] = TERMINAL;
+  } else {
+    std::cerr << "duplicate lexical id: \"" << lex_name
+              << "\", please check the grammar\n";
+    return 1;
+  }
+  ret = match(ASSIGN);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(STRING);
+  if (0 != ret) {
+    return ret;
+  }
   return 0;
 }
 
 int GrammarConfig::parse_rule() {
-  match(KEYWORD_RULE);
-  match(LEFT_CURLY_BRACKET);
-  parse_rule_entry_list();
-  match(RIGHT_CURLY_BRACKET);
+  int ret = match(KEYWORD_RULE);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(LEFT_CURLY_BRACKET);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = parse_rule_entry_list();
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(RIGHT_CURLY_BRACKET);
+  if (0 != ret) {
+    return ret;
+  }
   return 0;
 }
 
 int GrammarConfig::parse_rule_entry_list() {
   while (look_ahead() == IDENTIFIER) {
-    parse_rule_entry();
+    int ret = parse_rule_entry();
+    if (0 != ret) {
+      return ret;
+    }
   }
   return 0;
 }
 
 int GrammarConfig::parse_rule_entry() {
-  match(IDENTIFIER);
-  match(ASSIGN);
-  while (look_ahead() == IDENTIFIER) {
-    match(IDENTIFIER);
+  std::vector<std::string> rule_string_vec;
+  int ret = match(IDENTIFIER);
+  if (0 != ret) {
+    return ret;
   }
-  match(SEPARATOR);
+  std::string non_terminal_str;
+  assert(0 == get_token_text(cur_tok_, &non_terminal_str));
+  std::map<std::string, int>::iterator iter = name_to_symbol_type_.find(non_terminal_str);
+  if (iter != name_to_symbol_type_.end()) {
+    if (NON_TERMINAL != iter->second) {
+      assert(TERMINAL == iter->second);
+      std::cerr << "non_terminal name \"" << non_terminal_str
+                << "\" conficts with lex name, please check grammar.\n";
+      return 1;
+    }
+  } else {
+    name_to_symbol_type_[non_terminal_str] = NON_TERMINAL;
+  }
+  rule_string_vec.push_back(non_terminal_str);
+  ret = match(ASSIGN);
+  if (0 != ret) {
+    return ret;
+  }
+  while (look_ahead() == IDENTIFIER) {
+    int ret = match(IDENTIFIER);
+    if (0 != ret) {
+      return ret;
+    }
+    std::string symbol_str;
+    assert(0 == get_token_text(cur_tok_, &symbol_str));
+    rule_string_vec.push_back(symbol_str);
+  }
+  ret = match(SEPARATOR);
+  if (0 != ret) {
+    return ret;
+  }
+  rules_.push_back(rule_string_vec);
   return 0;
 }
 
 int GrammarConfig::match(int expect_type) {
   if (look_ahead() == expect_type) {
+    cur_tok_ = look_ahead_tok_;
     std::string next_tok_text;
     if (look_ahead_tok_.start >= 0 && look_ahead_tok_.start < look_ahead_tok_.end && look_ahead_tok_.end <= text_len_) {
       next_tok_text = std::string(input_ + look_ahead_tok_.start, input_ + look_ahead_tok_.end);
@@ -171,6 +276,7 @@ int GrammarConfig::match(int expect_type) {
               << ", " << std::setw(20) << next_tok_text
               << ") " << std::endl;
     get_next();
+    return 0;
   } else {
     std::string next_tok_text;
     if (look_ahead_tok_.start >= 0 && look_ahead_tok_.start < look_ahead_tok_.end && look_ahead_tok_.end <= text_len_) {
@@ -180,7 +286,7 @@ int GrammarConfig::match(int expect_type) {
               << " got (" << grammar_config_lex_type_to_str(look_ahead_tok_.type)
               << ", " << next_tok_text
               << ") " << std::endl;
-    assert(0);
+    return 1;
   }
   return 0;
 }
