@@ -1,0 +1,16 @@
+lexical {
+  STRING = '[a-zA-Z]+'
+  LEFT_ROUND_BRACKET = '\('
+  RIGHT_ROUND_BRACKET = '\)'
+  EXCLAMATION = '!'
+  QUESTION_MARK = '\?'
+}
+rule {
+  Session = Facts Question;
+  Session = LEFT_ROUND_BRACKET Session RIGHT_ROUND_BRACKET Session;
+  Facts = Fact Facts;
+  Facts = EPSILON;
+  Fact = EXCLAMATION STRING;
+  Question = QUESTION_MARK STRING;
+}
+set_start { Session }

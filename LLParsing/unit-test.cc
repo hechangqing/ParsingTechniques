@@ -34,7 +34,7 @@ void unit_test_LL1() {
     {
       Symbol left = parser.make_symbol("Facts", NON_TERMINAL);
       RuleRight right;
-      right.push_back(parser.make_symbol("", TERMINAL));
+      right.push_back(parser.make_symbol("EPSILON", TERMINAL));
       parser.add_rule(left, right);
     }
     {
@@ -96,6 +96,16 @@ void unit_test_LL1() {
     }
     parser.compile();
   }
+  {
+    LLParser parser;
+    std::ifstream is("test_data/grammar2.txt");
+    int ret = parser.load_grammar(is);
+    if (0 != ret) {
+      std::cout << "grammar error\n";
+    } else {
+      parser.compile();
+    }
+  }
 }
 
 void unit_test_grammar_config() {
@@ -127,6 +137,6 @@ void unit_test_grammar_config() {
 
 int main() {
   unit_test_LL1();
-  unit_test_grammar_config();
+  //unit_test_grammar_config();
   return 0;
 }

@@ -7,7 +7,8 @@
 int GrammarConfig::parse_config(const char *config_text, int text_len) {
   init_input(config_text, text_len);
   get_next();
-  parse_cfg();
+  name_to_symbol_type_["EPSILON"] = TERMINAL;
+  int ret = parse_cfg();
   for (int i = 0; i < rules_.size(); i++) {
     for (int j = 0; j < rules_[i].size(); j++) {
       std::cout << rules_[i][j] << " ";
@@ -17,6 +18,25 @@ int GrammarConfig::parse_config(const char *config_text, int text_len) {
   for (std::map<std::string, int>::iterator iter = name_to_symbol_type_.begin(); iter != name_to_symbol_type_.end(); iter++) {
     std::cout << iter->first << " " << (iter->second == NON_TERMINAL ? "non_terminal": "terminal") << "\n";
   }
+  for (int i = 0; i < lex_defs_.size(); i++) {
+    std::cout << lex_defs_[i].first << " " << lex_defs_[i].second << "\n";
+  }
+  std::cout << " grammar parse config ret " << ret << "\n";
+  if (0 != ret) {
+    return ret;
+  } else {
+    return 0;
+  }
+}
+
+std::vector<std::vector<std::string> > &GrammarConfig::get_rules() {
+  return rules_;
+}
+
+int GrammarConfig::name_to_type(const std::string &name) {
+  std::map<std::string, int>::const_iterator iter = name_to_symbol_type_.find(name);
+  assert(iter != name_to_symbol_type_.end());
+  return iter->second;
 }
 
 int GrammarConfig::init() {
@@ -26,6 +46,10 @@ int GrammarConfig::init() {
   rule_ids.push_back(KEYWORD_LEX);
   regex_rules.push_back("(rule)");
   rule_ids.push_back(KEYWORD_RULE);
+  regex_rules.push_back("(set_start)");
+  rule_ids.push_back(KEYWORD_SET_START);
+  regex_rules.push_back("(EPSILON)");
+  rule_ids.push_back(KEYWORD_EPSILON);
   regex_rules.push_back("[_a-zA-Z][_a-zA-Z0-9]*");
   rule_ids.push_back(IDENTIFIER);
   regex_rules.push_back("=");
@@ -98,6 +122,12 @@ const char *grammar_config_lex_type_to_str(int lex_type) {
     case KEYWORD_RULE:
       return "KEYWORD_RULE";
       break;
+    case KEYWORD_SET_START:
+      return "KEYWORD_SET_START";
+      break;
+    case KEYWORD_EPSILON:
+      return "KEYWORD_EPSILON";
+      break;
     case IDENTIFIER:
       return "ID";
       break;
@@ -132,6 +162,10 @@ int GrammarConfig::parse_cfg() {
     return ret;
   }
   ret = parse_rule();
+  if (0 != ret) {
+    return ret;
+  }
+  ret = parse_set_start();
   if (0 != ret) {
     return ret;
   }
@@ -190,6 +224,9 @@ int GrammarConfig::parse_lex_entry() {
   if (0 != ret) {
     return ret;
   }
+  std::string lex_regex;
+  assert(0 == get_token_text(cur_tok_, &lex_regex));
+  lex_defs_.push_back(std::make_pair(lex_name, lex_regex));
   return 0;
 }
 
@@ -247,20 +284,65 @@ int GrammarConfig::parse_rule_entry() {
   if (0 != ret) {
     return ret;
   }
-  while (look_ahead() == IDENTIFIER) {
-    int ret = match(IDENTIFIER);
-    if (0 != ret) {
-      return ret;
-    }
-    std::string symbol_str;
-    assert(0 == get_token_text(cur_tok_, &symbol_str));
-    rule_string_vec.push_back(symbol_str);
+  if (look_ahead() == KEYWORD_EPSILON) {
+      int ret = match(KEYWORD_EPSILON);
+      if (0 != ret) {
+        return ret;
+      }
+      std::string symbol_str;
+      assert(0 == get_token_text(cur_tok_, &symbol_str));
+      rule_string_vec.push_back(symbol_str);
+  } else {
+    do {
+      int ret = match(IDENTIFIER);
+      if (0 != ret) {
+        return ret;
+      }
+      std::string symbol_str;
+      assert(0 == get_token_text(cur_tok_, &symbol_str));
+      rule_string_vec.push_back(symbol_str);
+    } while (look_ahead() == IDENTIFIER);
   }
   ret = match(SEPARATOR);
   if (0 != ret) {
     return ret;
   }
   rules_.push_back(rule_string_vec);
+  return 0;
+}
+
+int GrammarConfig::parse_set_start() {
+  int ret = match(KEYWORD_SET_START);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(LEFT_CURLY_BRACKET);
+  if (0 != ret) {
+    return ret;
+  }
+  ret = match(IDENTIFIER);
+  if (0 != ret) {
+    return ret;
+  }
+  assert(0 == get_token_text(cur_tok_, &start_non_terminal_));
+  ret = match(RIGHT_CURLY_BRACKET);
+  if (0 != ret) {
+    return ret;
+  }
+  std::map<std::string, int>::iterator iter = name_to_symbol_type_.find(start_non_terminal_);
+  if (iter == name_to_symbol_type_.end()) {
+    std::cerr << "no rules for start non terminal \"" << start_non_terminal_
+              << "\", please check the grammar.\n";
+    return 1;
+  } else {
+    if (iter->second != NON_TERMINAL) {
+      assert(iter->second == TERMINAL);
+      std::cerr << "set terminal \"" << start_non_terminal_
+                << "\" as start symbol, please check the grammar.\n";
+      return 1;
+    }
+  }
+
   return 0;
 }
 
@@ -303,3 +385,8 @@ int GrammarConfig::get_next() {
 int GrammarConfig::look_ahead() {
   return look_ahead_tok_.type;
 }
+
+std::string GrammarConfig::get_start_symbol() {
+  return start_non_terminal_;
+}
+

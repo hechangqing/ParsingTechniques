@@ -1,16 +1,14 @@
 #ifndef LL_PARSER_H
 #define LL_PARSER_H
 
+#include "grammar-config.h"
+#include "common-types.h"
+
+#include <iostream>
 #include <vector>
 #include <string>
 #include <set>
 #include <map>
-
-enum SymbolType {
-  NON_TERMINAL,
-  TERMINAL,
-  UNDEFINE
-};
 
 struct Symbol {
   Symbol() : id(0), type(UNDEFINE) { }
@@ -29,10 +27,11 @@ class LLParser {
 public:
   LLParser() : id_cnt_(ID_START) {
     eps_id_ = id_cnt_++;
-    name_to_id_[""] = eps_id_;
-    id_to_name_[eps_id_] = "";
+    name_to_id_["EPSILON"] = eps_id_;
+    id_to_name_[eps_id_] = "EPSILON";
   }
   Symbol make_symbol(const std::string &name, int symbol_type);
+  int load_grammar(std::istream &is);
   int add_rule(const Symbol &left, const RuleRight &right);
   int set_start(const Symbol &start_symbol);
   int compile();
@@ -56,6 +55,8 @@ private:
   std::map<int, std::set<int> > id_to_follow_set_;
   std::map<int, std::map<int, std::set<int> > > parse_table_;
   Symbol start_symbol_;
+  GrammarConfig grammar_config_;
+  std::string grammar_text_;
 };
 
 #endif // LL_PARSER_H

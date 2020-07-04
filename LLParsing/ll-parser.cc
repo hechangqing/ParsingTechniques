@@ -245,3 +245,33 @@ std::string LLParser::rule_right_to_str(int rule_non_terminal, int rule_right_id
   }
   return out;
 }
+
+int LLParser::load_grammar(std::istream &is) {
+  is.seekg(0, is.end);
+  int length = is.tellg();
+  is.seekg(0, is.beg);
+
+  grammar_text_.resize(length);
+  is.read((char*)grammar_text_.data(), length);
+  int ret = grammar_config_.parse_config(grammar_text_.data(), grammar_text_.size());
+  if (0 != ret) {
+    return ret;
+  }
+
+  std::vector<std::vector<std::string> > rules = grammar_config_.get_rules();
+  for (int i = 0; i < rules.size(); i++) {
+    std::vector<std::string> &this_rule = rules[i];
+    assert(this_rule.size() >= 2);
+    Symbol left = make_symbol(this_rule[0], grammar_config_.name_to_type(this_rule[0]));
+    RuleRight right;
+    for (int j = 1; j < this_rule.size(); j++) {
+      right.push_back(make_symbol(this_rule[j], grammar_config_.name_to_type(this_rule[j])));
+    }
+    add_rule(left, right);
+  }
+
+  std::string start_symbol_str = grammar_config_.get_start_symbol();
+  Symbol start_symbol = make_symbol(start_symbol_str, grammar_config_.name_to_type(start_symbol_str));
+  set_start(start_symbol);
+  return 0;
+}

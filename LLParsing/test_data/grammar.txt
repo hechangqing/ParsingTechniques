@@ -26,3 +26,4 @@ rule {
   param_list = exp comma  param_list;
   program = exp;
 }
+set_start { program }
