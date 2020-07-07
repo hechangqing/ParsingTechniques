@@ -36,6 +36,7 @@ public:
   }
   int parse_config(const char *config_text, int text_len);
   std::vector<std::vector<std::string> > &get_rules();
+  std::vector<std::pair<std::string, std::string> > &get_lex_defs();
   int name_to_type(const std::string &name);
   std::string get_start_symbol();
   int init_input(const char *input_text, int text_len);

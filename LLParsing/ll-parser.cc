@@ -258,7 +258,20 @@ int LLParser::load_grammar(std::istream &is) {
     return ret;
   }
 
-  std::vector<std::vector<std::string> > rules = grammar_config_.get_rules();
+  std::vector<std::pair<std::string, std::string> > &lex_defs = grammar_config_.get_lex_defs();
+  std::vector<std::string> regex_rules;
+  std::vector<int> rule_ids;
+  for (int i = 0; i < lex_defs.size(); i++) {
+    std::string &this_regex = lex_defs[i].second;
+    Symbol this_symbol = make_symbol(lex_defs[i].first, TERMINAL);
+    assert(TERMINAL == grammar_config_.name_to_type(lex_defs[i].first));
+    regex_rules.push_back(this_regex);
+    rule_ids.push_back(this_symbol.id);
+    std::cout << " regex " << regex_rules.back() << " rule_id " << rule_ids.back() << std::endl;
+  }
+  lexer_.compile(regex_rules, rule_ids);
+
+  std::vector<std::vector<std::string> > &rules = grammar_config_.get_rules();
   for (int i = 0; i < rules.size(); i++) {
     std::vector<std::string> &this_rule = rules[i];
     assert(this_rule.size() >= 2);
@@ -274,4 +287,57 @@ int LLParser::load_grammar(std::istream &is) {
   Symbol start_symbol = make_symbol(start_symbol_str, grammar_config_.name_to_type(start_symbol_str));
   set_start(start_symbol);
   return 0;
+}
+
+int LLParser::next_token(LexToken *tok) {
+  assert(tok != NULL);
+
+  if (start_pos_ < text_len_) {
+    std::vector<int> ret_rules;
+    int end_pos = 0;
+    int ret = lexer_.next_token(input_, start_pos_, text_len_, &ret_rules, &end_pos);
+    if (ret == 0) { // accept
+      assert(ret_rules.size() >= 1);
+      tok->type = ret_rules[0];
+      tok->start = start_pos_;
+      tok->end = end_pos;
+      start_pos_ = end_pos;
+    } else { // not accept
+      tok->type = UNKNOWN;
+      tok->start = start_pos_;
+      tok->end = start_pos_ + 1;
+      start_pos_ += 1;
+    }
+    return 0;
+  } else {
+    tok->type = END_MARK;
+    tok->start = -1;
+    tok->end = -1;
+    return 1;
+  }
+}
+
+int LLParser::parse(const std::string &input_text) {
+  input_text_ = input_text;
+  input_ = input_text_.data();
+  text_len_ = input_text_.size();
+  start_pos_ = 0;
+
+  while (next_token(&look_ahead_tok_) == 0) {
+    std::string token_text;
+    get_token_text(look_ahead_tok_, &token_text);
+    std::cout << "Token(" << look_ahead_tok_.type << ", "
+              << token_text << ")\n";
+  }
+  return 0;
+}
+
+int LLParser::get_token_text(const LexToken &tok, std::string *str) {
+  assert(str != NULL);
+  if (tok.start >= 0 && tok.start < tok.end && tok.end <= text_len_) {
+    *str = std::string(input_ + tok.start, input_ + tok.end);
+    return 0;
+  } else {
+    return 1;
+  }
 }

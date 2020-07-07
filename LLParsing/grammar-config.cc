@@ -33,6 +33,10 @@ std::vector<std::vector<std::string> > &GrammarConfig::get_rules() {
   return rules_;
 }
 
+std::vector<std::pair<std::string, std::string> > &GrammarConfig::get_lex_defs() {
+  return lex_defs_;
+}
+
 int GrammarConfig::name_to_type(const std::string &name) {
   std::map<std::string, int>::const_iterator iter = name_to_symbol_type_.find(name);
   assert(iter != name_to_symbol_type_.end());
@@ -226,7 +230,10 @@ int GrammarConfig::parse_lex_entry() {
   }
   std::string lex_regex;
   assert(0 == get_token_text(cur_tok_, &lex_regex));
-  lex_defs_.push_back(std::make_pair(lex_name, lex_regex));
+  assert(lex_regex.size() >= 2);
+  assert(lex_regex.back() == '\'');
+  assert(lex_regex.front() == '\'');
+  lex_defs_.push_back(std::make_pair(lex_name, lex_regex.substr(1, lex_regex.size() - 2)));
   return 0;
 }
 

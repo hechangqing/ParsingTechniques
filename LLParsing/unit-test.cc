@@ -105,6 +105,8 @@ void unit_test_LL1() {
     } else {
       parser.compile();
     }
+    std::string text = "name1 abc ? ! ( name2 )";
+    parser.parse(text);
   }
 }
 
