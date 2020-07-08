@@ -22,6 +22,8 @@ typedef std::vector<Symbol> RuleRight;
 
 class LLParser {
   enum {
+    INVALID_ID = -2,
+    LEX_TYPE_UNKNOWN = -1,
     END_MARK = 0,
     ID_START = 1
   };
@@ -36,6 +38,7 @@ public:
     eps_id_ = id_cnt_++;
     name_to_id_["EPSILON"] = eps_id_;
     id_to_name_[eps_id_] = "EPSILON";
+    skip_token_type_ = INVALID_ID;
   }
   Symbol make_symbol(const std::string &name, int symbol_type);
   int load_grammar(std::istream &is);
@@ -53,7 +56,9 @@ public:
   const std::string &id_to_name(int id) const;
   std::string rule_right_to_str(int rule_non_terminal, int rule_right_idx) const;
   int next_token(LexToken *tok);
+  int get_next_token(LexToken *tok);
   int get_token_text(const LexToken &tok, std::string *str);
+  int get_rule_right(int non_terminal_id, int terminal_id, RuleRight *rule_right);
 private:
   std::map<int, Symbol> id_to_left_;
   std::map<int, std::vector<RuleRight> > id_to_rules_;
@@ -67,6 +72,10 @@ private:
   Symbol start_symbol_;
   GrammarConfig grammar_config_;
   std::string grammar_text_;
+
+  std::vector<Symbol> analysis_stack_;
+  std::vector<Symbol> prediction_stack_;
+
   Lexer lexer_;
   std::string input_text_;
   const char *input_;
@@ -74,6 +83,7 @@ private:
   int text_len_;
   LexToken look_ahead_tok_;
   LexToken cur_tok_;
+  int skip_token_type_;
 };
 
 #endif // LL_PARSER_H

@@ -4,6 +4,7 @@ lexical {
   RIGHT_ROUND_BRACKET = '\)'
   EXCLAMATION = '!'
   QUESTION_MARK = '\?'
+  skip = '[ \n\t]'
 }
 rule {
   Session = Facts Question;

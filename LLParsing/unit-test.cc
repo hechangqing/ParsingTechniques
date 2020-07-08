@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cassert>
 
 void unit_test_LL1() {
   {
@@ -105,8 +106,13 @@ void unit_test_LL1() {
     } else {
       parser.compile();
     }
-    std::string text = "name1 abc ? ! ( name2 )";
-    parser.parse(text);
+    std::string text = "! somefact ! twofact ? somequestion";
+    std::cout << text << "\n";
+    assert(0 == parser.parse(text));
+    assert(0 == parser.parse("! fact ? question"));
+    assert(0 == parser.parse("(! fact ? question) ? twoquestion"));
+
+    assert(1 == parser.parse("("));
   }
 }
 
