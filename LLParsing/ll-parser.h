@@ -12,10 +12,12 @@
 #include <map>
 
 struct Symbol {
-  Symbol() : id(0), type(UNDEFINE) { }
-  Symbol(int new_id, int new_type) : id(new_id), type(new_type) { }
+  Symbol() : id(0), type(UNDEFINE), rule_idx(0) { }
+  Symbol(int new_id, int new_type) : id(new_id), type(new_type), rule_idx(0) { }
   int id;
   int type;
+  int rule_idx;
+  std::vector<int> rule_indices;
 };
 
 typedef std::vector<Symbol> RuleRight;
@@ -46,6 +48,7 @@ public:
   int set_start(const Symbol &start_symbol);
   int compile();
   int parse(const std::string &input_text);
+  int backtracking_parse(const std::string &input_text);
   int compute_first_set();
   int first(RuleRight::iterator beg, RuleRight::iterator end, std::set<int> *out_set);
   int compute_follow_set();
@@ -59,6 +62,8 @@ public:
   int get_next_token(LexToken *tok);
   int get_token_text(const LexToken &tok, std::string *str);
   int get_rule_right(int non_terminal_id, int terminal_id, RuleRight *rule_right);
+  int get_rule_right_with_id(int non_terminal_id, int rule_right_idx, RuleRight *rule_right);
+  int get_rule_right_indices(int non_terminal_id, int terminal_id, std::vector<int> *rule_right_indices);
 private:
   std::map<int, Symbol> id_to_left_;
   std::map<int, std::vector<RuleRight> > id_to_rules_;
@@ -84,6 +89,8 @@ private:
   LexToken look_ahead_tok_;
   LexToken cur_tok_;
   int skip_token_type_;
+
+  std::vector<LexToken> tokens_;
 };
 
 #endif // LL_PARSER_H

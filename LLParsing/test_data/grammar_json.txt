@@ -1,0 +1,36 @@
+lexical {
+  LEFT_SQUARE_BRACKET = '\['
+  LEFT_CURLY_BRACKET = '{'
+  RIGHT_SQUARE_BRACKET = '\]'
+  RIGHT_CURLY_BRACKET = '}'
+  COLON = ':'
+  COMMA = ','
+  TRUE = 'true'
+  FALSE = 'false'
+  NULL = 'null'
+  number = '\-?(0|[1-9][0-9]*)(.[0-9]+)?([eE][\+\-]?[0-9]+)?'
+  string = '"(([^"\\]|(\\("|\\|/|b|f|n|r|t|u[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])))+)?"'
+  skip = '[ 	
+]'
+}
+rule {
+  value = object;
+  value = array;
+  value = number;
+  value = string;
+  value = TRUE;
+  value = FALSE;
+  value = NULL;
+  object = LEFT_CURLY_BRACKET name_value_list RIGHT_CURLY_BRACKET;
+  name_value_list = EPSILON;
+  name_value_list = name_value_entry comma_name_value_list;
+  comma_name_value_list = EPSILON;
+  comma_name_value_list = COMMA name_value_entry comma_name_value_list;
+  name_value_entry = string COLON value;
+  array = LEFT_SQUARE_BRACKET value_list RIGHT_SQUARE_BRACKET;
+  value_list = EPSILON;
+  value_list = value comma_value_list;
+  comma_value_list = EPSILON;
+  comma_value_list = COMMA value comma_value_list;
+}
+set_start { value }

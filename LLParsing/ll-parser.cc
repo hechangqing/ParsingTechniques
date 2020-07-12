@@ -439,6 +439,142 @@ int LLParser::parse(const std::string &input_text) {
   }
 }
 
+int LLParser::get_rule_right_indices(int non_terminal_id, int terminal_id, std::vector<int> *rule_right_indices) {
+  assert(rule_right_indices != NULL);
+  std::map<int, std::map<int, std::set<int> > >::iterator iter_table = parse_table_.find(non_terminal_id);
+  if (iter_table == parse_table_.end()) {
+    return 1; // no rule found
+  } else {
+    std::map<int, std::set<int> > &table_line = iter_table->second;
+    std::map<int, std::set<int> >::iterator iter_table_entry = table_line.find(terminal_id);
+    if (iter_table_entry == table_line.end()) {
+      return 1; // no rule found
+    } else {
+      std::set<int> &rule_right_ids = iter_table_entry->second;
+      if (rule_right_ids.size() == 0) {
+        return 1; // no rule found
+      }
+      rule_right_indices->clear();
+      for (std::set<int>::iterator iter = rule_right_ids.begin(); iter != rule_right_ids.end(); iter++) {
+        rule_right_indices->push_back(*iter);
+      }
+      return 0;
+    }
+  }
+}
+
+int LLParser::get_rule_right_with_id(int non_terminal_id, int rule_right_idx, RuleRight *rule_right) {
+  assert(rule_right != NULL);
+  const std::vector<RuleRight> &rule_right_vec = id_to_rules_.at(non_terminal_id);
+  assert(rule_right_idx < rule_right_vec.size());
+  *rule_right = rule_right_vec.at(rule_right_idx);
+  return 0;
+}
+
+int LLParser::backtracking_parse(const std::string &input_text) {
+  input_text_ = input_text;
+  input_ = input_text_.data();
+  text_len_ = input_text_.size();
+  start_pos_ = 0;
+
+  analysis_stack_.clear();
+  prediction_stack_.clear();
+
+  prediction_stack_.push_back(start_symbol_);
+  prediction_stack_.push_back(Symbol(END_MARK, TERMINAL));
+
+  tokens_.clear();
+  while (get_next_token(&look_ahead_tok_) == 0) {
+    if (look_ahead_tok_.type == LEX_TYPE_UNKNOWN) {
+      std::string token_text;
+      get_token_text(look_ahead_tok_, &token_text);
+      std::cerr << "unexpect lex " << token_text << std::endl;
+      return 1;
+    }
+    tokens_.push_back(look_ahead_tok_);
+  }
+  {
+    LexToken tok;
+    tok.type = END_MARK;
+    tok.start = 0;
+    tok.end = 0;
+    tokens_.push_back(tok);
+  }
+
+  assert(tokens_.size() >= 1);
+  int token_idx = 0;
+  look_ahead_tok_ = tokens_[token_idx];
+  while (!prediction_stack_.empty()) {
+    Symbol top;
+    do {
+      top = prediction_stack_.back();
+      if (top.type == NON_TERMINAL) {
+        prediction_stack_.pop_back();
+
+        int ret = get_rule_right_indices(top.id, look_ahead_tok_.type, &top.rule_indices);
+        if (ret != 0) {
+          std::cerr << " no rule find " << std::endl;
+          break;
+        }
+
+        top.rule_idx = 0;
+        analysis_stack_.push_back(top);
+        RuleRight rule_right;
+        ret = get_rule_right_with_id(top.id, 0, &rule_right);
+        assert(ret == 0);
+        for (int i = rule_right.size() - 1; i >= 0; i--) {
+          if (rule_right[i].id != eps_id_) {
+            prediction_stack_.push_back(rule_right[i]);
+          }
+        }
+      }
+    } while (top.type == NON_TERMINAL && !prediction_stack_.empty());
+    if (prediction_stack_.empty()) {
+      break;
+    } else if (prediction_stack_.back().type == NON_TERMINAL) {
+      break;
+    } else if (prediction_stack_.back().type == TERMINAL) {
+      if (prediction_stack_.back().id != look_ahead_tok_.type) {
+        assert(0);
+      } else {
+        analysis_stack_.push_back(prediction_stack_.back());
+        prediction_stack_.pop_back();
+        if (token_idx + 1 < tokens_.size()) {
+          token_idx += 1;
+          look_ahead_tok_ = tokens_[token_idx];
+        } else {
+          break;
+        }
+      }
+    } else {
+      assert(0);
+    }
+    std::string token_text;
+    std::string token_type_str;
+    get_token_text(look_ahead_tok_, &token_text);
+    if (look_ahead_tok_.type != LEX_TYPE_UNKNOWN) {
+      assert(id_to_name_.find(look_ahead_tok_.type) != id_to_name_.end());
+      token_type_str = id_to_name_[look_ahead_tok_.type];
+    }
+    std::cout << "Token(" << look_ahead_tok_.type << ", "
+              << token_type_str << ", "
+              << token_text << ")\n";
+  }
+
+  if (prediction_stack_.empty() && look_ahead_tok_.type == END_MARK) {
+    for (int i = 0; i < analysis_stack_.size(); i++) {
+      Symbol &this_symbol = analysis_stack_[i];
+      std::cout << id_to_name(this_symbol.id) << " ";
+    }
+    std::cout << std::endl;
+    return 0;
+  } else {
+    return 1;
+  }
+
+
+}
+
 int LLParser::get_token_text(const LexToken &tok, std::string *str) {
   assert(str != NULL);
   if (tok.start >= 0 && tok.start < tok.end && tok.end <= text_len_) {

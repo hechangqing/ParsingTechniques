@@ -5,98 +5,32 @@
 #include <fstream>
 #include <cassert>
 
+void unit_test_LL_json() {
+  LLParser parser;
+  std::ifstream is ("test_data/grammar_json.txt");
+  int ret = parser.load_grammar(is);
+  if (0 != ret) {
+    std::cout << "grammar error\n";
+  }
+  parser.compile();
+
+  assert(0 == parser.parse("true"));
+  assert(0 == parser.parse("false"));
+  assert(0 == parser.parse("null"));
+
+  assert(0 == parser.parse("1.23"));
+  assert(0 == parser.parse("-3.57e10"));
+
+  assert(0 == parser.parse("\"\""));
+  assert(0 == parser.parse("\"abc\""));
+
+  assert(0 == parser.parse("{        \"name\"     	 	   	:   \"harry\" \n\n }"));
+
+  assert(0 != parser.parse("true }"));
+  assert(0 != parser.parse("{ \"name\" : \"harry\" , }"));
+}
+
 void unit_test_LL1() {
-  {
-    LLParser parser;
-    {
-      Symbol left = parser.make_symbol("Session", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("Facts", NON_TERMINAL));
-      right.push_back(parser.make_symbol("Question", NON_TERMINAL));
-      parser.set_start(left);
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Session", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("(", TERMINAL));
-      right.push_back(parser.make_symbol("Session", NON_TERMINAL));
-      right.push_back(parser.make_symbol(")", TERMINAL));
-      right.push_back(parser.make_symbol("Session", NON_TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Facts", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("Fact", NON_TERMINAL));
-      right.push_back(parser.make_symbol("Facts", NON_TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Facts", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("EPSILON", TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Fact", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("!", TERMINAL));
-      right.push_back(parser.make_symbol("STRING", TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Question", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("?", TERMINAL));
-      right.push_back(parser.make_symbol("STRING", TERMINAL));
-      parser.add_rule(left, right);
-    }
-    parser.compile();
-  }
-  {
-    LLParser parser;
-    {
-      Symbol left = parser.make_symbol("S", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("E", NON_TERMINAL));
-      parser.set_start(left);
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("E", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("E", NON_TERMINAL));
-      right.push_back(parser.make_symbol("Q", NON_TERMINAL));
-      right.push_back(parser.make_symbol("F", NON_TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("E", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("F", NON_TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("F", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("a", TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Q", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("+", TERMINAL));
-      parser.add_rule(left, right);
-    }
-    {
-      Symbol left = parser.make_symbol("Q", NON_TERMINAL);
-      RuleRight right;
-      right.push_back(parser.make_symbol("-", TERMINAL));
-      parser.add_rule(left, right);
-    }
-    parser.compile();
-  }
   {
     LLParser parser;
     std::ifstream is("test_data/grammar2.txt");
@@ -144,7 +78,8 @@ void unit_test_grammar_config() {
 }
 
 int main() {
-  unit_test_LL1();
+  //unit_test_LL1();
   //unit_test_grammar_config();
+  unit_test_LL_json();
   return 0;
 }
