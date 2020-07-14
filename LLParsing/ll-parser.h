@@ -64,6 +64,8 @@ public:
   int get_rule_right(int non_terminal_id, int terminal_id, RuleRight *rule_right);
   int get_rule_right_with_id(int non_terminal_id, int rule_right_idx, RuleRight *rule_right);
   int get_rule_right_indices(int non_terminal_id, int terminal_id, std::vector<int> *rule_right_indices);
+  std::string print_token(const LexToken &tok);
+  std::string print_symbol(const Symbol &symbol);
 private:
   std::map<int, Symbol> id_to_left_;
   std::map<int, std::vector<RuleRight> > id_to_rules_;

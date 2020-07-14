@@ -5,7 +5,7 @@
 #include <fstream>
 #include <cassert>
 
-void unit_test_LL_json() {
+void unit_test_LL_json(bool print_example_text) {
   LLParser parser;
   std::ifstream is ("test_data/grammar_json.txt");
   int ret = parser.load_grammar(is);
@@ -14,20 +14,39 @@ void unit_test_LL_json() {
   }
   parser.compile();
 
-  assert(0 == parser.parse("true"));
-  assert(0 == parser.parse("false"));
-  assert(0 == parser.parse("null"));
+  std::vector<std::string> pos_examples = {
+    "true",
+    "false",
+    "null",
+    "1.23",
+    "-3.57e10",
+    "\"\"",
+    "\"abc\"",
+    "{  \"name\"  	   	 : \"harry\" \n \n }"
+  };
 
-  assert(0 == parser.parse("1.23"));
-  assert(0 == parser.parse("-3.57e10"));
+  for (int i = 0; i < pos_examples.size(); i++) {
+    std::string &pos_example = pos_examples[i];
+    if (print_example_text) {
+      std::cout << "TEST INPUT: " << pos_example << std::endl;
+    }
+    assert(0 == parser.parse(pos_example));
+    assert(0 == parser.backtracking_parse(pos_example));
+  }
 
-  assert(0 == parser.parse("\"\""));
-  assert(0 == parser.parse("\"abc\""));
+  std::vector<std::string> neg_examples = {
+    "true } ",
+    "{ \"name\" : \"harry\" , }"
+  };
 
-  assert(0 == parser.parse("{        \"name\"     	 	   	:   \"harry\" \n\n }"));
-
-  assert(0 != parser.parse("true }"));
-  assert(0 != parser.parse("{ \"name\" : \"harry\" , }"));
+  for (int i = 0; i < neg_examples.size(); i++) {
+    std::string &neg_example = neg_examples[i];
+    if (print_example_text) {
+      std::cout << "TEST INPUT: " << neg_example << std::endl;
+    }
+    assert(0 != parser.parse(neg_example));
+    assert(0 != parser.backtracking_parse(neg_example));
+  }
 }
 
 void unit_test_LL1() {
@@ -80,6 +99,6 @@ void unit_test_grammar_config() {
 int main() {
   //unit_test_LL1();
   //unit_test_grammar_config();
-  unit_test_LL_json();
+  unit_test_LL_json(true);
   return 0;
 }
