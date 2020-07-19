@@ -3,6 +3,7 @@
 
 #include "grammar-config.h"
 #include "common-types.h"
+#include "ast.h"
 #include "../Lexer/lexer.h"
 
 #include <iostream>
@@ -11,16 +12,6 @@
 #include <set>
 #include <map>
 
-struct Symbol {
-  Symbol() : id(0), type(UNDEFINE), rule_idx(0) { }
-  Symbol(int new_id, int new_type) : id(new_id), type(new_type), rule_idx(0) { }
-  int id;
-  int type;
-  int rule_idx;
-  std::vector<int> rule_indices;
-};
-
-typedef std::vector<Symbol> RuleRight;
 
 class LLParser {
   enum {
@@ -35,11 +26,23 @@ class LLParser {
     int start;
     int end;
   };
+  struct Symbol {
+    Symbol() : id(0), type(UNDEFINE), rule_idx(0) { }
+    Symbol(int new_id, int new_type) : id(new_id), type(new_type), rule_idx(0) { }
+    int id;
+    int type;
+    int rule_idx;
+    std::vector<int> rule_indices;
+    LexToken tok;
+  };
+  typedef std::vector<Symbol> RuleRight;
 public:
   LLParser() : id_cnt_(ID_START) {
     eps_id_ = id_cnt_++;
     name_to_id_["EPSILON"] = eps_id_;
     id_to_name_[eps_id_] = "EPSILON";
+    name_to_id_["<EOF>"] = END_MARK;
+    id_to_name_[END_MARK] = "<EOF>";
     skip_token_type_ = INVALID_ID;
   }
   Symbol make_symbol(const std::string &name, int symbol_type);
@@ -49,6 +52,7 @@ public:
   int compile();
   int parse(const std::string &input_text);
   int backtracking_parse(const std::string &input_text);
+  std::shared_ptr<AST> get_parse_tree();
   int compute_first_set();
   int first(RuleRight::iterator beg, RuleRight::iterator end, std::set<int> *out_set);
   int compute_follow_set();
@@ -66,6 +70,7 @@ public:
   int get_rule_right_indices(int non_terminal_id, int terminal_id, std::vector<int> *rule_right_indices);
   std::string print_token(const LexToken &tok);
   std::string print_symbol(const Symbol &symbol);
+  std::shared_ptr<AST> generate_parse_tree(int *start_idx);
 private:
   std::map<int, Symbol> id_to_left_;
   std::map<int, std::vector<RuleRight> > id_to_rules_;
@@ -93,6 +98,7 @@ private:
   int skip_token_type_;
 
   std::vector<LexToken> tokens_;
+  std::shared_ptr<AST> parse_tree_;
 };
 
 #endif // LL_PARSER_H

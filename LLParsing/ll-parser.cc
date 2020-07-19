@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cassert>
 
-Symbol LLParser::make_symbol(const std::string &name, int symbol_type) {
+LLParser::Symbol LLParser::make_symbol(const std::string &name, int symbol_type) {
   std::map<std::string, int>::iterator iter = name_to_id_.find(name);
   if (iter != name_to_id_.end()) {
     return Symbol(iter->second, symbol_type);
@@ -509,9 +509,8 @@ int LLParser::backtracking_parse(const std::string &input_text) {
     do {
       top = prediction_stack_.back();
       if (top.type == NON_TERMINAL) {
-        prediction_stack_.pop_back();
-        std::cout << "top " << print_symbol(top) << std::endl;
-        std::cout << "LL(1) token " << print_token(look_ahead_tok_) << std::endl;
+        //std::cout << "top " << print_symbol(top) << std::endl;
+        //std::cout << "LL(1) token " << print_token(look_ahead_tok_) << std::endl;
 
         int ret = get_rule_right_indices(top.id, look_ahead_tok_.type, &top.rule_indices);
         if (ret != 0) {
@@ -525,6 +524,7 @@ int LLParser::backtracking_parse(const std::string &input_text) {
         RuleRight rule_right;
         ret = get_rule_right_with_id(top.id, top.rule_indices[top.rule_idx], &rule_right);
         assert(ret == 0);
+        prediction_stack_.pop_back();
         for (int i = rule_right.size() - 1; i >= 0; i--) {
           if (rule_right[i].id != eps_id_) {
             prediction_stack_.push_back(rule_right[i]);
@@ -532,9 +532,9 @@ int LLParser::backtracking_parse(const std::string &input_text) {
         }
       }
     } while (top.type == NON_TERMINAL && !prediction_stack_.empty());
-        for (int i = 0; i < prediction_stack_.size(); i++) {
-          std::cout << print_symbol(prediction_stack_[i]) << std::endl;
-        }
+    //    for (int i = 0; i < prediction_stack_.size(); i++) {
+    //      std::cout << print_symbol(prediction_stack_[i]) << std::endl;
+    //    }
     if (prediction_stack_.empty()) {
       break;
     } else if (prediction_stack_.back().type == NON_TERMINAL) {
@@ -598,12 +598,13 @@ int LLParser::backtracking_parse(const std::string &input_text) {
         if (analysis_stack_.empty()) {
           break;
         }
-        for (int i = 0; i < prediction_stack_.size(); i++) {
-          std::cout << print_symbol(prediction_stack_[i]) << std::endl;
-        }
-        std::cout << print_token(look_ahead_tok_) << std::endl;
+        //for (int i = 0; i < prediction_stack_.size(); i++) {
+        //  std::cout << print_symbol(prediction_stack_[i]) << std::endl;
+        //}
+        //std::cout << print_token(look_ahead_tok_) << std::endl;
       } else {
         analysis_stack_.push_back(prediction_stack_.back());
+        analysis_stack_.back().tok = look_ahead_tok_;
         prediction_stack_.pop_back();
         if (token_idx + 1 < tokens_.size()) {
           token_idx += 1;
@@ -615,19 +616,57 @@ int LLParser::backtracking_parse(const std::string &input_text) {
     } else {
       assert(0);
     }
-    std::cout << print_token(look_ahead_tok_) << std::endl;
+    //std::cout << print_token(look_ahead_tok_) << std::endl;
   }
 
   if (prediction_stack_.empty() && look_ahead_tok_.type == END_MARK) {
-    for (int i = 0; i < analysis_stack_.size(); i++) {
-      Symbol &this_symbol = analysis_stack_[i];
-      std::cout << print_symbol(this_symbol) << " ";
-    }
-    std::cout << std::endl;
+    //for (int i = 0; i < analysis_stack_.size(); i++) {
+    //  Symbol &this_symbol = analysis_stack_[i];
+    //  std::cout << print_symbol(this_symbol);
+    //  if (this_symbol.type == TERMINAL) {
+    //    std::cout << print_token(this_symbol.tok) << " ";
+    //  } else {
+    //    std::cout << " ";
+    //  }
+    //}
+    //std::cout << std::endl;
+    int start_idx = 0;
+    parse_tree_ = generate_parse_tree(&start_idx);
     return 0;
   } else {
     return 1;
   }
+}
+
+std::shared_ptr<AST> LLParser::generate_parse_tree(int *start_idx) {
+  assert(*start_idx < analysis_stack_.size());
+  if (analysis_stack_[*start_idx].type == NON_TERMINAL) {
+    Symbol& top_symbol = analysis_stack_[*start_idx];
+    RuleRight rule_right;
+    int ret = get_rule_right_with_id(top_symbol.id,
+                                     top_symbol.rule_indices[top_symbol.rule_idx],
+                                     &rule_right);
+    assert(ret == 0);
+    std::shared_ptr<AST> root(new AST());
+    root->text = id_to_name(top_symbol.id);
+    *start_idx += 1;
+    for (int i = 0; i < rule_right.size(); i++) {
+      root->children.push_back(generate_parse_tree(start_idx));
+    }
+    return root;
+  } else if (analysis_stack_[*start_idx].type == TERMINAL) {
+    std::shared_ptr<AST> node(new AST());
+    int ret = get_token_text(analysis_stack_[*start_idx].tok, &(node->text));
+    *start_idx += 1;
+    return node;
+  } else {
+    assert(0);
+    return std::shared_ptr<AST>();
+  }
+}
+
+std::shared_ptr<AST> LLParser::get_parse_tree() {
+  return parse_tree_;
 }
 
 int LLParser::get_token_text(const LexToken &tok, std::string *str) {
@@ -659,6 +698,6 @@ std::string LLParser::print_symbol(const Symbol &symbol) {
   if (id_to_name_.find(symbol.id) != id_to_name_.end()) {
     symbol_str = id_to_name_[symbol.id];
   }
-  result += "Symbol(" + std::to_string(symbol.id) + ", " + symbol_str + ", " + (symbol.type == NON_TERMINAL ? "NON_TERMINAL" : "TERMINAL") + ")";
+  result += "Symbol(" + std::to_string(symbol.id) + ", " + symbol_str + ", " + (symbol.type == NON_TERMINAL ? "NON_TERMINAL" : "TERMINAL") + ", " + std::to_string(symbol.rule_idx) + ")";
   return result;
 }

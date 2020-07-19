@@ -1,0 +1,17 @@
+lexical {
+  number = '(0|[1-9][0-9]*)(.[0-9]+)?([eE][\+\-]?[0-9]+)?'
+  left_bracket = '\('
+  right_bracket = '\)'
+  additive_operator = '[\+\-]'
+  multiplicative_operator = '[\*/]'
+  skip = '[ 	]'
+}
+rule {
+  additive_expression = multiplicative_expression;
+  additive_expression = multiplicative_expression additive_operator additive_expression;
+  multiplicative_expression = primary_expression;
+  multiplicative_expression = primary_expression multiplicative_operator multiplicative_expression;
+  primary_expression = number;
+  primary_expression = left_bracket additive_expression right_bracket;
+}
+set_start { additive_expression }
